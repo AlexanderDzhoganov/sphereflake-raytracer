@@ -7,6 +7,7 @@
 #include <thread>
 #include <functional>
 #include <mutex>
+#include <condition_variable>
 #include <memory>
 #include <atomic>
 
@@ -25,13 +26,17 @@
 
 using namespace glm;
 
+#include "matmult.h"
 #include "camera.h"
 #include "raytrace_sphereflake.h"
 
 GLuint program;
 
-#define RT_W 1280 / 2
-#define RT_H 720 / 2
+#define RT_W 1280
+#define RT_H 720
+
+#define WND_WIDTH 1280
+#define WND_HEIGHT 720
 
 Camera camera;
 
@@ -129,7 +134,7 @@ GLuint indexBuffer;
 
 void CreateBuffers()
 {
-	float vertices[] =
+	float vertices [] =
 	{
 		-1.0f, -1.0f, 0.0,
 		1.0f, -1.0f, 0.0,
@@ -169,24 +174,63 @@ void CreateTexture()
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
 }
 
-void UploadTexture()
+
+GLuint GBufferPositionsTexture;
+GLuint GBufferPositionsPBO;
+
+GLuint GBufferNormalsTexture;
+GLuint GBufferNormalsPBO;
+
+void CreateGBufferTextures()
 {
-	glBufferData(GL_PIXEL_UNPACK_BUFFER, RT_W * RT_H * 4, rts.GetBitmap().data(), GL_STREAM_DRAW);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, RT_W, RT_H, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glGenTextures(1, &GBufferPositionsTexture);
+	glBindTexture(GL_TEXTURE_2D, GBufferPositionsTexture);
+
+	glGenBuffers(1, &GBufferPositionsPBO);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, GBufferPositionsPBO);
+
+	glGenTextures(1, &GBufferNormalsTexture);
+	glBindTexture(GL_TEXTURE_2D, GBufferNormalsTexture);
+
+	glGenBuffers(1, &GBufferNormalsPBO);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, GBufferNormalsPBO);
+}
+
+void UploadGBufferTextures()
+{
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, GBufferPositionsTexture);
+	glBufferData(GL_PIXEL_UNPACK_BUFFER, RT_W * RT_H * 3 * sizeof(float), rts.GetGBuffer().positions.data(), GL_STREAM_DRAW);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, RT_W, RT_H, 0, GL_RGB, GL_FLOAT, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, GBufferNormalsTexture);
+	glBufferData(GL_PIXEL_UNPACK_BUFFER, RT_W * RT_H * 3 * sizeof(float), rts.GetGBuffer().normals.data(), GL_STREAM_DRAW);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, RT_W, RT_H, 0, GL_RGB, GL_FLOAT, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 }
 
-int main(int argc, char* argv[])
+void UploadTexture()
 {
-	glfwSetErrorCallback(&error_callback); 
+	glBufferData(GL_PIXEL_UNPACK_BUFFER, RT_W * RT_H * 4, rts.GetBitmap().data(), GL_STREAM_DRAW);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, RT_W, RT_H, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+}
+
+int main(int argc, char* argv [])
+{
+	glfwSetErrorCallback(&error_callback);
 
 	if (!glfwInit())
 	{
 		return -1;
 	}
 
-	auto window = glfwCreateWindow(1280, 720, "Sphereflake", NULL, NULL);
+	auto window = glfwCreateWindow(WND_WIDTH, WND_HEIGHT, "Sphereflake", NULL, NULL);
 	if (!window)
 	{
 		glfwTerminate();
@@ -198,16 +242,17 @@ int main(int argc, char* argv[])
 	glewInit();
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	
+
 	std::cout << "OpenGL " << glGetString(GL_VERSION) << std::endl;
 
-	glfwSwapInterval(0);
+		glfwSwapInterval(0);
 	ReloadShader();
 	glEnable(GL_TEXTURE_2D);
 	CreateBuffers();
-	CreateTexture();
+	//CreateTexture();
+	CreateGBufferTextures();
 
-	glViewport(0, 0, 1280, 720);
+	glViewport(0, 0, WND_WIDTH, WND_HEIGHT);
 
 	double lastTime = glfwGetTime();
 	double fpsTimeAccum = 0.0;
@@ -218,7 +263,9 @@ int main(int argc, char* argv[])
 	double lastXpos = 0.0;
 	double lastYpos = 0.0;
 
-	rts.DoImage(&camera);
+	//rts.DoImage(&camera);
+
+	bool doRender = true;
 	
 	while (!glfwWindowShouldClose(window))
 	{
@@ -239,46 +286,61 @@ int main(int argc, char* argv[])
 			fpsCounter = 0;
 		}
 
-		float cameraSpeed = 1.0 * dt;
+		float cameraSpeed = 0.7f * dt;
 
 		if (glfwGetKey(window, GLFW_KEY_D))
 		{
 			camera.setPosition(camera.getPosition() + camera.getOrientation() * vec3(-1, 0, 0) * cameraSpeed);
+			doRender = true;
 		}
 		
 		if (glfwGetKey(window, GLFW_KEY_A))
 		{
 			camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(1, 0, 0) * cameraSpeed);
+			doRender = true;
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_S))
 		{
 			camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, 0, 1) * cameraSpeed);
+			doRender = true;
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_W))
 		{
 			camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, 0, -1) * cameraSpeed);
+			doRender = true;
 		}
 		
 		if (glfwGetKey(window, GLFW_KEY_Q))
 		{
 			camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, -1, 0) * cameraSpeed);
+			doRender = true;
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_E))
 		{
 			camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, 1, 0) * cameraSpeed);
+			doRender = true;
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_Z))
 		{
-			camera.setFov(camera.getFov() + 0.01f);
+			camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, 0, -1) * cameraSpeed * 0.5f);
+			
+			if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT))
+				camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, 0, -1) * cameraSpeed * 0.005f);
+			doRender = true;
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_X))
 		{
-			camera.setFov(camera.getFov() - 0.01f);
+			camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, 0, 1) * cameraSpeed * 0.5f);
+
+			if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT))
+				camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, 0, 1) * cameraSpeed * 0.005f);
+
+			doRender = true;
 		}
 
 		double xpos;
@@ -297,10 +359,14 @@ int main(int argc, char* argv[])
 			camera.setRoll(camera.getRoll() + -deltay * 0.001);
 		}
 
-		UploadTexture();
+		rts.DoFrame(&camera);
+		//UploadTexture();
+		UploadGBufferTextures();
 		RenderSphereflake();
 		glfwSwapBuffers(window);
-		rts.WaitForThreads(&camera);
+
+	//	std::cout << "drawn " << spheresDrawn << " spheres" << std::endl;
+		spheresDrawn = 0;
 
 		glfwPollEvents();
 	}
