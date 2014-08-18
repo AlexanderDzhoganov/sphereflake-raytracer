@@ -26,6 +26,8 @@
 
 using namespace glm;
 
+#include <Eigen/Dense>
+
 #include "matmult.h"
 #include "camera.h"
 #include "raytrace_sphereflake.h"

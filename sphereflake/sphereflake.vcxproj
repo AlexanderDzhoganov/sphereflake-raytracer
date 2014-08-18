@@ -84,7 +84,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\lib\glm\glm;..\lib\glew-1.11.0\include;..\lib\glfw-3.0.4.bin.WIN64\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\lib\eigen\;..\lib\glm\glm;..\lib\glew-1.11.0\include;..\lib\glfw-3.0.4.bin.WIN64\include\</AdditionalIncludeDirectories>
       <AdditionalOptions>/F16 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -116,7 +116,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\lib\glm\glm;..\lib\glew-1.11.0\include;..\lib\glfw-3.0.4.bin.WIN64\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\lib\eigen\;..\lib\glm\glm;..\lib\glew-1.11.0\include;..\lib\glfw-3.0.4.bin.WIN64\include\</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
