@@ -127,12 +127,16 @@ void SetUniformVec3(const std::string& name, const vec3& v)
 	glUniform3fv(loc, 1, value_ptr(v));
 }
 
-void SetCameraUniforms()
+void SetUniformFloat(const std::string& name, float f)
 {
-	SetUniformVec3("cameraPosition", camera.getPosition());
-	SetUniformVec3("topLeft", camera.getTopLeft());
-	SetUniformVec3("topRight", camera.getTopRight());
-	SetUniformVec3("bottomLeft", camera.getBottomLeft());
+	auto loc = glGetUniformLocation(program, name.c_str());
+	if (loc == -1)
+	{
+		std::cout << "uniform not found " << name << std::endl;
+		return;
+	}
+
+	glUniform1f(loc, f);
 }
 
 GLuint vertBuffer;
@@ -260,7 +264,9 @@ int main(int argc, char* argv [])
 	CreateBuffers();
 	CreateGBufferTextures();
 
-	glViewport(0, 0, WND_WIDTH, WND_HEIGHT);
+	int width, height;
+	glfwGetFramebufferSize(window, &width, &height);
+	glViewport(0, 0, width, height);
 
 	double lastTime = glfwGetTime();
 	double fpsTimeAccum = 0.0;
@@ -343,6 +349,11 @@ int main(int argc, char* argv [])
 			camera.setYaw(camera.getYaw() + -deltay * 0.001);
 			camera.setPitch(camera.getPitch() + deltax * 0.001);
 		}
+
+		SetUniformFloat("time", glfwGetTime());
+		SetUniformVec3("cameraPosition", camera.getPosition());
+		SetUniformFloat("fbWidth", width);
+		SetUniformFloat("fbHeight", height);
 
 		rts.DoFrame(&camera);
 		//UploadTexture();
