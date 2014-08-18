@@ -1,13 +1,7 @@
 #ifndef __RAYTRACE_SPHEREFLAKE_H
 #define __RAYTRACE_SPHEREFLAKE_H
 
-struct Color
-{
-	unsigned char r;
-	unsigned char g;
-	unsigned char b;
-	unsigned char a;
-};
+#define MAX_DEPTH 64
 
 struct GBuffer
 {
@@ -15,47 +9,19 @@ struct GBuffer
 	std::vector<vec4> normals;
 };
 
-#define MAX_DEPTH 64
-
-Eigen::Matrix4f createRotation(Eigen::Vector4f rot)
-{
-	float sinx = sinf(rot[0]);
-	float siny = sinf(rot[1]);
-	float sinz = sinf(rot[2]);
-
-	float cosx = cosf(rot[0]);
-	float cosy = cosf(rot[1]);
-	float cosz = cosf(rot[2]);
-
-	Eigen::Matrix4f result = Eigen::Matrix4f::Identity();
-	result(0, 0) = cosy * cosz;
-	result(1, 0) = cosx * sinz + sinx * siny * cosz;
-	result(2, 0) = sinx * sinz - cosx * siny * cosz;
-
-	result(0, 1) = -cosy * sinz;
-	result(1, 1) = cosx * cosz - sinx * siny * sinz; 
-	result(2, 1) = sinx * cosz + cosx * siny * sinz;
-
-	result(0, 2) = siny;
-	result(1, 2) = -sinx * cosy;
-	result(2, 2) = cosx * cosy;
-	return result;
-}
-
-size_t spheresDrawn = 0;
-
 class RaytraceSphereflake
 {
 
 	public:
+	int maxDepthReached = 0;
+	long long raysPerSecond = 0;
+
 	RaytraceSphereflake(size_t width, size_t height) : m_Width(width), m_Height(height)
 	{
-		m_Bitmap.resize(4 * width * height);
-
 		m_GBuffer.positions.resize(width * height);
 		m_GBuffer.normals.resize(width * height);
 
-		PrecomputeChildTransforms();
+		Precomputem_ChildTransforms();
 
 		auto threadCount = std::thread::hardware_concurrency();
 
@@ -78,33 +44,20 @@ class RaytraceSphereflake
 		}
 	}
 
-	const std::vector<Color>& GetBitmap()
-	{
-		return m_Bitmap;
-	}
-
 	const GBuffer& GetGBuffer()
 	{
 		return m_GBuffer;
 	}
-	
-	bool m_Deinitialize = false;
-	std::mutex m_Mutex;
-	volatile int finishedThreads = 0;
 
-	Vec3Packet rayOriginSSE;
-	Vec3Packet topLeftSSE;
-	Vec3Packet topRightSSE;
-	Vec3Packet bottomLeftSSE;
-
-	void DoFrame(Camera* camera)
+	void UpdateCamera(Camera* camera)
 	{
-		rayOriginSSE.Set(camera->getPosition());
-		topLeftSSE.Set(camera->getTopLeft());
-		topRightSSE.Set(camera->getTopRight());
-		bottomLeftSSE.Set(camera->getBottomLeft());
+		m_RayOrigin.Set(camera->getPosition());
+		m_TopLeft.Set(camera->getTopLeft());
+		m_TopRight.Set(camera->getTopRight());
+		m_BottomLeft.Set(camera->getBottomLeft());
 	}
 
+	private:
 	void DoImagePartSSE(int __x, int __y, int __width, int __height)
 	{
 		std::mt19937 mt;
@@ -113,7 +66,7 @@ class RaytraceSphereflake
 		std::uniform_int_distribution<int> widthRand(0, m_Width - 2);
 		std::uniform_int_distribution<int> heightRand(0, m_Height - 2);
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
 		for (;;)
 		{
@@ -132,8 +85,8 @@ class RaytraceSphereflake
 			auto uvx = _mm_div_ps(x, width);
 			auto uvy = _mm_div_ps(y, height);
 
-			auto targetDirection = topLeftSSE + (topRightSSE - topLeftSSE) * uvx + (bottomLeftSSE - topLeftSSE) * uvy;
-			auto rayDirection = targetDirection - rayOriginSSE;
+			auto targetDirection = m_TopLeft + (m_TopRight - m_TopLeft) * uvx + (m_BottomLeft - m_TopLeft) * uvy;
+			auto rayDirection = targetDirection - m_RayOrigin;
 			Normalize(rayDirection);
 
 			Vec3Packet position;
@@ -145,7 +98,7 @@ class RaytraceSphereflake
 			Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
 			__m128 minT = _mm_set1_ps(std::numeric_limits<float>::max());
 
-			RenderSphereFlakeSSE(rayOriginSSE, rayDirection, transform, 0, 3.f, position, normal, minT);
+			RenderSphereFlakeSSE(m_RayOrigin, rayDirection, transform, 3.f, 0, minT, position, normal);
 
 			for (auto q = 0u; q < 4; q++)
 			{
@@ -161,34 +114,7 @@ class RaytraceSphereflake
 		}
 	}
 
-	inline bool RaySphereIntersection(const Eigen::Vector4f& rayOrigin, const Eigen::Vector4f& rayDirection, const Eigen::Vector4f& sphereOrigin, float sphereRadius, float& tOut)
-	{
-		Eigen::Vector4f sphereTOrigin = sphereOrigin - rayOrigin;
-		float t = rayDirection.dot(sphereTOrigin);
-		if (t < 0.0)
-		{
-			return false;
-		}
-
-		Eigen::Vector4f closestPoint = rayDirection * t;
-		Eigen::Vector4f diff = closestPoint - sphereTOrigin;
-		float dist = diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2];
-		if (dist <= sphereRadius * sphereRadius)
-		{
-			tOut = -t;
-			return true;
-		}
-
-		return false;
-	}
-
-	int maxDepthReached = 0;
-	long long raysPerSecond = 0;
-
-	private:
-	std::vector<Eigen::Matrix4f> childTransforms;
-
-	void PrecomputeChildTransforms()
+	void Precomputem_ChildTransforms()
 	{
 		for (auto i = 0u; i < 6; i++)
 		{
@@ -206,7 +132,7 @@ class RaytraceSphereflake
 			transform(0, 3) = displacement[0];
 			transform(1, 3) = displacement[1];
 			transform(2, 3) = displacement[2];
-			childTransforms.push_back(transform);
+			m_ChildTransforms.push_back(transform);
 		}
 
 		for (auto i = 0u; i < 3; i++)
@@ -225,8 +151,33 @@ class RaytraceSphereflake
 			transform(0, 3) = displacement[0];
 			transform(1, 3) = displacement[1];
 			transform(2, 3) = displacement[2];
-			childTransforms.push_back(transform);
+			m_ChildTransforms.push_back(transform);
 		}
+	}
+
+	Eigen::Matrix4f createRotation(Eigen::Vector4f rot)
+	{
+		float sinx = sinf(rot[0]);
+		float siny = sinf(rot[1]);
+		float sinz = sinf(rot[2]);
+
+		float cosx = cosf(rot[0]);
+		float cosy = cosf(rot[1]);
+		float cosz = cosf(rot[2]);
+
+		Eigen::Matrix4f result = Eigen::Matrix4f::Identity();
+		result(0, 0) = cosy * cosz;
+		result(1, 0) = cosx * sinz + sinx * siny * cosz;
+		result(2, 0) = sinx * sinz - cosx * siny * cosz;
+
+		result(0, 1) = -cosy * sinz;
+		result(1, 1) = cosx * cosz - sinx * siny * sinz;
+		result(2, 1) = sinx * cosz + cosx * siny * sinz;
+
+		result(0, 2) = siny;
+		result(1, 2) = -sinx * cosy;
+		result(2, 2) = cosx * cosy;
+		return result;
 	}
 
 	void RenderSphereFlakeSSE
@@ -234,20 +185,21 @@ class RaytraceSphereflake
 		const Vec3Packet& rayOrigin,
 		const Vec3Packet& rayDirection,
 		const Eigen::Matrix4f& parentTransform,
-		int depth,
 		float parentRadius,
+		int depth,
+		__m128& minT,
 		Vec3Packet& position,
-		Vec3Packet& normal,
-		__m128& minT
+		Vec3Packet& normal
 	)
 	{
+		static const __m128 oneThird = _mm_set1_ps(1.0 / 3.0);
+		static const __m128 two = _mm_set1_ps(2.0);
+		static const __m128 hundred = _mm_set1_ps(100.0f);
+
 		if (depth >= MAX_DEPTH)
 		{
 			return;
 		}
-
-		static const __m128 oneThird = _mm_set1_ps(1.0 / 3.0);
-		static const __m128 two = _mm_set1_ps(2.0);
 
 		float radiusScalar = parentRadius / 3.0;
 		__m128 radius = _mm_set1_ps(radiusScalar);
@@ -267,7 +219,7 @@ class RaytraceSphereflake
 			return;
 		}
 
-		auto depthResult = _mm_cmplt_ps(_mm_sqrt_ps(_mm_div_ps(t, radius)), _mm_set1_ps(100.0f));
+		auto depthResult = _mm_cmplt_ps(_mm_sqrt_ps(_mm_div_ps(t, radius)), hundred);
 		if (_mm_movemask_ps(depthResult) == 0)
 		{
 			return;
@@ -280,19 +232,21 @@ class RaytraceSphereflake
 		
 		for (auto i = 0; i < 9; i++)
 		{
-			auto transform = childTransforms[i];
+			auto transform = m_ChildTransforms[i];
 			float translationScale = (4.0 / 3.0) * radiusScalar;
 			transform(0, 3) *= translationScale;
 			transform(1, 3) *= translationScale;
 			transform(2, 3) *= translationScale;
 			auto worldTransform = parentTransform * transform;
 
-			RenderSphereFlakeSSE(rayOrigin, rayDirection, worldTransform, depth + 1, radiusScalar, position, normal, minT);
+			RenderSphereFlakeSSE(rayOrigin, rayDirection, worldTransform, radiusScalar, depth + 1, minT, position, normal);
 		}
 
 		result = RaySphereIntersectionSSE(rayOrigin, rayDirection, sphereOriginPacket, radiusSq, t);
+
 		auto minTResult = _mm_cmplt_ps(t, minT);
 		result = _mm_and_ps(result, minTResult);
+
 		if (_mm_movemask_ps(result) == 0)
 		{
 			return;
@@ -325,10 +279,17 @@ class RaytraceSphereflake
 
 	size_t m_Width;
 	size_t m_Height;
-	std::vector<Color> m_Bitmap;
 	GBuffer m_GBuffer;
 
+	std::vector<Eigen::Matrix4f> m_ChildTransforms;
 	std::vector<std::unique_ptr<std::thread>> m_Threads;
+
+	bool m_Deinitialize = false;
+
+	Vec3Packet m_RayOrigin;
+	Vec3Packet m_TopLeft;
+	Vec3Packet m_TopRight;
+	Vec3Packet m_BottomLeft;
 
 };
 

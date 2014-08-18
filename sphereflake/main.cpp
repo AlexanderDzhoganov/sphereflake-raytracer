@@ -3,15 +3,9 @@
 #include <string>
 #include <fstream>
 #include <vector>
-#include <unordered_map>
 #include <random>
 #include <thread>
-#include <functional>
-#include <mutex>
-#include <condition_variable>
 #include <memory>
-#include <atomic>
-
 #include <mmintrin.h>
 
 #include <GL/glew.h>
@@ -36,8 +30,6 @@ using namespace glm;
 #include "camera.h"
 #include "raytrace_sphereflake.h"
 
-GLuint program;
-
 #define RT_W 1280
 #define RT_H 720
 
@@ -45,8 +37,8 @@ GLuint program;
 #define WND_HEIGHT 720
 
 Camera camera;
-
 RaytraceSphereflake rts(RT_W, RT_H);
+GLuint program;
 
 GLuint CreateShader(const std::string& source, GLenum shaderType)
 {
@@ -78,7 +70,7 @@ GLuint CreateShader(const std::string& source, GLenum shaderType)
 	return shader;
 }
 
-void ReloadShader()
+void LoadProgram()
 {
 	std::ifstream ifsVertex("vertex.glsl");
 	std::string vertSource((std::istreambuf_iterator<char>(ifsVertex)), std::istreambuf_iterator<char>());
@@ -162,28 +154,10 @@ void CreateBuffers()
 	glDisable(GL_DEPTH_TEST);
 }
 
-void RenderSphereflake()
+void DrawFullscreenQuad()
 {
 	glDrawArrays(GL_QUADS, 0, 4);
 }
-
-void error_callback(int error, const char* description)
-{
-	std::cout << description << std::endl;
-}
-
-GLuint tex;
-GLuint pbo;
-
-void CreateTexture()
-{
-	glGenTextures(1, &tex);
-	glBindTexture(GL_TEXTURE_2D, tex);
-
-	glGenBuffers(1, &pbo);
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
-}
-
 
 GLuint GBufferPositionsTexture;
 GLuint GBufferPositionsPBO;
@@ -220,7 +194,6 @@ void UploadGBufferTextures()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, GBufferNormalsTexture);
 
@@ -235,8 +208,6 @@ void UploadGBufferTextures()
 
 int main(int argc, char* argv [])
 {
-	glfwSetErrorCallback(&error_callback);
-
 	if (!glfwInit())
 	{
 		return -1;
@@ -259,7 +230,7 @@ int main(int argc, char* argv [])
 
 	glfwSwapInterval(1);
 
-	ReloadShader();
+	LoadProgram();
 	glEnable(GL_TEXTURE_2D);
 	CreateBuffers();
 	CreateGBufferTextures();
@@ -355,15 +326,10 @@ int main(int argc, char* argv [])
 		SetUniformFloat("fbWidth", width);
 		SetUniformFloat("fbHeight", height);
 
-		rts.DoFrame(&camera);
-		//UploadTexture();
+		rts.UpdateCamera(&camera);
 		UploadGBufferTextures();
-		RenderSphereflake();
+		DrawFullscreenQuad();
 		glfwSwapBuffers(window);
-
-	//	std::cout << "drawn " << spheresDrawn << " spheres" << std::endl;
-		spheresDrawn = 0;
-
 		glfwPollEvents();
 	}
 
