@@ -12,6 +12,8 @@
 #include <memory>
 #include <atomic>
 
+#include <mmintrin.h>
+
 #include <GL/glew.h>
 
 #define GLFW_DLL
@@ -30,7 +32,7 @@ using namespace glm;
 #define EIGEN_NO_MALLOC
 #include <Eigen/Dense>
 
-#include "matmult.h"
+#include "SIMD.h"
 #include "camera.h"
 #include "raytrace_sphereflake.h"
 
@@ -249,7 +251,8 @@ int main(int argc, char* argv [])
 
 	std::cout << "OpenGL " << glGetString(GL_VERSION) << std::endl;
 
-		glfwSwapInterval(0);
+	glfwSwapInterval(1);
+
 	ReloadShader();
 	glEnable(GL_TEXTURE_2D);
 	CreateBuffers();
@@ -261,16 +264,11 @@ int main(int argc, char* argv [])
 	double lastTime = glfwGetTime();
 	double fpsTimeAccum = 0.0;
 	size_t fpsCounter = 0;
-	camera.setPosition(vec3(0, 4, 0));
-	camera.setRoll(radians(-90.0));
+	camera.setPosition(vec3(0, 0, -4));
 
 	double lastXpos = 0.0;
 	double lastYpos = 0.0;
 
-	//rts.DoImage(&camera);
-
-	bool doRender = true;
-	
 	while (!glfwWindowShouldClose(window))
 	{
 		double time = glfwGetTime();
@@ -301,57 +299,32 @@ int main(int argc, char* argv [])
 
 		if (glfwGetKey(window, GLFW_KEY_D))
 		{
-			camera.setPosition(camera.getPosition() + camera.getOrientation() * vec3(-1, 0, 0) * cameraSpeed);
-			doRender = true;
+			camera.setPosition(camera.getPosition() + camera.getOrientation() * vec3(1, 0, 0) * cameraSpeed);
 		}
 		
 		if (glfwGetKey(window, GLFW_KEY_A))
 		{
-			camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(1, 0, 0) * cameraSpeed);
-			doRender = true;
+			camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(-1, 0, 0) * cameraSpeed);
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_S))
 		{
-			camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, 0, 1) * cameraSpeed);
-			doRender = true;
+			camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, 0, -1) * cameraSpeed);
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_W))
 		{
-			camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, 0, -1) * cameraSpeed);
-			doRender = true;
+			camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, 0, 1) * cameraSpeed);
 		}
 		
 		if (glfwGetKey(window, GLFW_KEY_Q))
 		{
-			camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, -1, 0) * cameraSpeed);
-			doRender = true;
+			camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, 1, 0) * cameraSpeed);
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_E))
 		{
-			camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, 1, 0) * cameraSpeed);
-			doRender = true;
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_Z))
-		{
-			camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, 0, -1) * cameraSpeed * 0.5f);
-			
-			if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT))
-				camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, 0, -1) * cameraSpeed * 0.005f);
-			doRender = true;
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_X))
-		{
-			camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, 0, 1) * cameraSpeed * 0.5f);
-
-			if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT))
-				camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, 0, 1) * cameraSpeed * 0.005f);
-
-			doRender = true;
+			camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, -1, 0) * cameraSpeed);
 		}
 
 		double xpos;
@@ -366,8 +339,8 @@ int main(int argc, char* argv [])
 
 		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2))
 		{
-			camera.setYaw(camera.getYaw() + -deltax * 0.001);
-			camera.setRoll(camera.getRoll() + -deltay * 0.001);
+			camera.setYaw(camera.getYaw() + -deltay * 0.001);
+			camera.setPitch(camera.getPitch() + deltax * 0.001);
 		}
 
 		rts.DoFrame(&camera);

@@ -15,7 +15,7 @@ struct GBuffer
 	std::vector<Eigen::Vector4f> normals;
 };
 
-#define MAX_DEPTH 4
+#define MAX_DEPTH 1
 
 Eigen::Matrix4f createRotation(Eigen::Vector4f rot)
 {
@@ -114,9 +114,6 @@ class RaytraceSphereflake
 		std::mt19937 mt;
 		mt.seed(time(NULL));
 
-	//	std::uniform_int_distribution<int> widthRand(_x, _x + width - 1);
-	//	std::uniform_int_distribution<int> heightRand(_y, _y + height - 1);
-
 		std::uniform_int_distribution<int> widthRand(0, m_Width - 1);
 		std::uniform_int_distribution<int> heightRand(0, m_Height - 1);
 
@@ -126,6 +123,7 @@ class RaytraceSphereflake
 		{
 			auto x = widthRand(mt);
 			auto y = heightRand(mt);
+
 			vec2 uv = vec2((float) x / (float) m_Width, (float) y / (float) m_Height);
 
 			Eigen::Vector4f targetDirection = topLeft + (topRight - topLeft) * uv[0] + (bottomLeft - topLeft) * uv[1];
@@ -135,7 +133,7 @@ class RaytraceSphereflake
 			Eigen::Vector4f normal = Eigen::Vector4f(0, 0, 0, 0);
 
 			Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
-			float minT = 1e32;
+			float minT = std::numeric_limits<float>::max();
 
 			RenderSphereFlake(rayOrigin, rayDirection, transform, 0, 3.0f, position, normal, minT);
 					
@@ -155,44 +153,22 @@ class RaytraceSphereflake
 	{
 		Eigen::Vector4f sphereTOrigin = sphereOrigin - rayOrigin;
 		float t = rayDirection.dot(sphereTOrigin);
+		if (t < 0.0)
+		{
+			return false;
+		}
+
 		Eigen::Vector4f closestPoint = rayDirection * t;
-
 		Eigen::Vector4f diff = closestPoint - sphereTOrigin;
-
 		float dist = diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2];
 		if (dist <= sphereRadius * sphereRadius)
 		{
-			tOut = t;
+			tOut = -t;
 			return true;
 		}
 
 		return false;
 	}
-	/*
-	inline bool RaySphereIntersection(const Eigen::Vector4f& rayOrigin, const Eigen::Vector4f& rayDirection, const Eigen::Vector4f& sphereOrigin, float sphereRadius, float& tOut)
-	{
-		Eigen::Vector4f h = sphereOrigin - rayOrigin;
-		float lf = rayDirection.dot(h);
-		float s = powf(sphereRadius, 2) - h.dot(h) + powf(lf, 2);
-
-		if (s < 0.0)
-		{
-			return false;
-		}
-
-		Eigen::Vector4f sphereTOrigin = sphereOrigin - rayOrigin;
-		float t = rayDirection.dot(sphereTOrigin);
-		Eigen::Vector4f closestPoint = rayDirection * t;
-		Eigen::Vector4f diff = closestPoint - sphereTOrigin;
-		float dist = diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2];
-		if (dist <= sphereRadius * sphereRadius)
-		{
-			return true;
-		}
-		z
-		tOut = t;
-		return true;
-	}*/
 
 	int maxDepthReached = 0;
 	long long raysPerSecond = 0;
@@ -204,8 +180,8 @@ class RaytraceSphereflake
 	{
 		for (auto i = 0u; i < 6; i++)
 		{
-			float s = (float)i * 60.0f;
-			float t = 90.0f;
+			float s = radians((float)i * 60.0f);
+			float t = radians(90.0f);
 			const auto& coss = cosf(s);
 			const auto& sins = sinf(s);
 			const auto& cost = cosf(t);
@@ -223,8 +199,8 @@ class RaytraceSphereflake
 
 		for (auto i = 0u; i < 3; i++)
 		{
-			float s = (30 + i * 120) % 360;
-			float t = 30.0f;
+			float s = radians((float)((30 + i * 120) % 360));
+			float t = radians(30.0f);
 			const auto& coss = cosf(s);
 			const auto& sins = sinf(s);
 			const auto& cost = cosf(t);
@@ -240,11 +216,11 @@ class RaytraceSphereflake
 			childTransforms.push_back(transform);
 		}
 	}
-
 	
 	bool RenderSphereFlake(const Eigen::Vector4f& rayOrigin, const Eigen::Vector4f& rayDir, const Eigen::Matrix4f& parentTransform, int depth, float parentRadius, Eigen::Vector4f& position, Eigen::Vector4f& normal, float& minT)
 	{
 		auto radius = (1.0 / 3.0) * parentRadius;
+
 		Eigen::Vector4f sphereOrigin(parentTransform(0, 3), parentTransform(1, 3), parentTransform(2, 3), 0.0f);
 
 		if (depth > maxDepthReached)
@@ -252,9 +228,18 @@ class RaytraceSphereflake
 			maxDepthReached = depth;
 		}
 
-		float t;
+		float t = 0.0f;
+		if (!RaySphereIntersection(rayOrigin, rayDir, sphereOrigin, radius * 2.0f, t))
+		{
+			return false;
+		}
+		else if (t / radius > 1000)
+		{
+			return false;
+		}
 
 		bool intersectsMain = false;
+
 		if (RaySphereIntersection(rayOrigin, rayDir, sphereOrigin, radius, t))
 		{
 			if (-t < minT)
@@ -264,7 +249,7 @@ class RaytraceSphereflake
 
 				Eigen::Vector4f sphereTOrigin = sphereOrigin - rayOrigin;
 				position = rayOrigin + rayDir * t;
-				normal = (position - sphereOrigin).normalized();
+				normal = (rayDir * t - sphereOrigin).normalized();
 				minT = -t;
 			}
 		}
@@ -277,26 +262,15 @@ class RaytraceSphereflake
 		for (auto i = 0; i < 9; i++)
 		{
 			auto transform = childTransforms[i];
-			float translationScale = radius + (1.0 / 3.0) * radius;
+			float translationScale = (4.0 / 3.0) * radius;
 			transform(0, 3) *= translationScale;
 			transform(1, 3) *= translationScale;
 			transform(2, 3) *= translationScale;
-			
 			auto worldTransform = parentTransform * transform;
-			Eigen::Vector4f childSphereOrigin(worldTransform(0, 3), worldTransform(1, 3), worldTransform(2, 3), 0.0f);
-
-			if (!RaySphereIntersection(rayOrigin, rayDir, childSphereOrigin, radius * (1.0 / 3.0) * 2.0f, t))
-			{
-				continue;
-			}
-			else if (-t / radius > 300)
-			{
-				continue;
-			}
 
 			if (RenderSphereFlake(rayOrigin, rayDir, worldTransform, depth + 1, radius, position, normal, minT))
 			{
-				return false;
+				continue;
 			}
 		}
 

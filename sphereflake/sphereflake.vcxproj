@@ -149,8 +149,8 @@
     <ClInclude Include="camera.h" />
     <ClInclude Include="glcorearb.h" />
     <ClInclude Include="kd_sphereflake.h" />
-    <ClInclude Include="matmult.h" />
     <ClInclude Include="raytrace_sphereflake.h" />
+    <ClInclude Include="SIMD.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

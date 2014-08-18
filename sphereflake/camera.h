@@ -40,7 +40,7 @@ class Camera
 
 	quat getOrientation() const
 	{
-		return quat(vec3(m_Roll, m_Pitch, m_Yaw));
+		return quat(vec3(m_Yaw, m_Pitch, m_Roll));
 	}
 
 	float getRoll() const

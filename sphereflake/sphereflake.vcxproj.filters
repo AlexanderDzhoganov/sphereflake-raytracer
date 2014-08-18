@@ -37,10 +37,10 @@
     <ClInclude Include="raytrace_sphereflake.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="matmult.h">
+    <ClInclude Include="kd_sphereflake.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="kd_sphereflake.h">
+    <ClInclude Include="SIMD.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
