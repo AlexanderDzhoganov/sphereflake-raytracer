@@ -11,11 +11,11 @@ struct Color
 
 struct GBuffer
 {
-	std::vector<Eigen::Vector4f> positions;
-	std::vector<Eigen::Vector4f> normals;
+	std::vector<vec4> positions;
+	std::vector<vec4> normals;
 };
 
-#define MAX_DEPTH 1
+#define MAX_DEPTH 16
 
 Eigen::Matrix4f createRotation(Eigen::Vector4f rot)
 {
@@ -64,7 +64,7 @@ class RaytraceSphereflake
 
 		for (auto i = 0u; i < threadCount; i++)
 		{
-			m_Threads.push_back(std::make_unique<std::thread>(std::bind(&RaytraceSphereflake::DoImagePart, this, 0, splitH * i, m_Width, splitH)));
+			m_Threads.push_back(std::make_unique<std::thread>(std::bind(&RaytraceSphereflake::DoImagePartSSE, this, 0, splitH * i, m_Width, splitH)));
 		}
 	}
 
@@ -91,57 +91,76 @@ class RaytraceSphereflake
 	bool m_Deinitialize = false;
 	std::mutex m_Mutex;
 	volatile int finishedThreads = 0;
-	Eigen::Vector4f rayOrigin;
-	Eigen::Vector4f topLeft;
-	Eigen::Vector4f topRight;
-	Eigen::Vector4f bottomLeft;
+
+	Vec3Packet rayOriginSSE;
+	Vec3Packet topLeftSSE;
+	Vec3Packet topRightSSE;
+	Vec3Packet bottomLeftSSE;
 
 	void DoFrame(Camera* camera)
 	{
-		auto cameraPos = camera->getPositionWithZoom();
+		auto cameraPos = camera->getPosition();
 		auto cameraTopLeft = camera->getTopLeft();
 		auto cameraTopRight = camera->getTopRight();
 		auto cameraBottomLeft = camera->getBottomLeft();
 
-		rayOrigin = Eigen::Vector4f(cameraPos.x, cameraPos.y, cameraPos.z, 0.0f);
-		topLeft = Eigen::Vector4f(cameraTopLeft.x, cameraTopLeft.y, cameraTopLeft.z, 0.0f);
-		topRight = Eigen::Vector4f(cameraTopRight.x, cameraTopRight.y, cameraTopRight.z, 0.0f);
-		bottomLeft = Eigen::Vector4f(cameraBottomLeft.x, cameraBottomLeft.y, cameraBottomLeft.z, 0.0f);
+		rayOriginSSE.Set(cameraPos);
+		topLeftSSE.Set(cameraTopLeft);
+		topRightSSE.Set(cameraTopRight);
+		bottomLeftSSE.Set(cameraBottomLeft);
 	}
 
-	void DoImagePart(int _x, int _y, int width, int height)
+	void DoImagePartSSE(int __x, int __y, int __width, int __height)
 	{
 		std::mt19937 mt;
 		mt.seed(time(NULL));
 
-		std::uniform_int_distribution<int> widthRand(0, m_Width - 1);
-		std::uniform_int_distribution<int> heightRand(0, m_Height - 1);
+		std::uniform_int_distribution<int> widthRand(0, m_Width - 2);
+		std::uniform_int_distribution<int> heightRand(0, m_Height - 2);
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 		for (;;)
 		{
-			auto x = widthRand(mt);
-			auto y = heightRand(mt);
+			auto xcenter = widthRand(mt);
+			auto ycenter = heightRand(mt);
 
-			vec2 uv = vec2((float) x / (float) m_Width, (float) y / (float) m_Height);
+			size_t xa[4] = { xcenter, xcenter + 1, xcenter, xcenter + 1 };
+			size_t ya[4] = { ycenter, ycenter, ycenter + 1, ycenter + 1 };
 
-			Eigen::Vector4f targetDirection = topLeft + (topRight - topLeft) * uv[0] + (bottomLeft - topLeft) * uv[1];
-			Eigen::Vector4f rayDirection = (targetDirection - rayOrigin).normalized();
+			auto x = _mm_set_ps(xa[0], xa[1], xa[2], xa[3]);
+			auto y = _mm_set_ps(ya[0], ya[1], ya[2], ya[3]);
 
-			Eigen::Vector4f position = Eigen::Vector4f(0, 0, 0, 0);
-			Eigen::Vector4f normal = Eigen::Vector4f(0, 0, 0, 0);
+			auto width = _mm_set1_ps(m_Width);
+			auto height = _mm_set1_ps(m_Height);
+
+			auto uvx = _mm_div_ps(x, width);
+			auto uvy = _mm_div_ps(y, height);
+
+			auto targetDirection = topLeftSSE + (topRightSSE - topLeftSSE) * uvx + (bottomLeftSSE - topLeftSSE) * uvy;
+			auto rayDirection = targetDirection - rayOriginSSE;
+			Normalize(rayDirection);
+
+			Vec3Packet position;
+			position.Set(vec3(0.0f));
+			Vec3Packet normal;
+			normal.Set(vec3(0.0f));
 
 			Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
-			float minT = std::numeric_limits<float>::max();
+			float floatMax = std::numeric_limits<float>::max();
 
-			RenderSphereFlake(rayOrigin, rayDirection, transform, 0, 3.0f, position, normal, minT);
-					
-			m_GBuffer.positions[x + y * m_Width] = position;
-			m_GBuffer.normals[x + y * m_Width] = normal;
+			__m128 radius = _mm_set1_ps(3.f);
+			__m128 minT = _mm_set1_ps(floatMax);
 
-			raysPerSecond++;
+			auto result = RenderSphereFlakeSSE(rayOriginSSE, rayDirection, transform, 0, 3.f, position, normal, minT);
 
+			for (auto q = 0u; q < 4; q++)
+			{
+				m_GBuffer.positions[xa[q] + ya[q] * m_Width] = vec4(position.Extract(q), 1.0f);
+				m_GBuffer.normals[xa[q] + ya[q] * m_Width] = vec4(normal.Extract(q), 1.0f);
+				raysPerSecond++;
+			}
+			
 			if (m_Deinitialize)
 			{
 				return;
@@ -216,65 +235,98 @@ class RaytraceSphereflake
 			childTransforms.push_back(transform);
 		}
 	}
-	
-	bool RenderSphereFlake(const Eigen::Vector4f& rayOrigin, const Eigen::Vector4f& rayDir, const Eigen::Matrix4f& parentTransform, int depth, float parentRadius, Eigen::Vector4f& position, Eigen::Vector4f& normal, float& minT)
-	{
-		auto radius = (1.0 / 3.0) * parentRadius;
 
-		Eigen::Vector4f sphereOrigin(parentTransform(0, 3), parentTransform(1, 3), parentTransform(2, 3), 0.0f);
+	int RenderSphereFlakeSSE
+	(
+		const Vec3Packet& rayOrigin,
+		const Vec3Packet& rayDirection,
+		const Eigen::Matrix4f& parentTransform,
+		int depth,
+		float parentRadius,
+		Vec3Packet& position,
+		Vec3Packet& normal,
+		__m128& minT
+	)
+	{
+		if (depth >= MAX_DEPTH)
+		{
+			return 0;
+		}
+
+		static const __m128 oneThird = _mm_set1_ps(1.0 / 3.0);
+		static const __m128 two = _mm_set1_ps(2.0);
+
+		float radiusScalar = parentRadius / 3.0;
+		__m128 radius = _mm_set1_ps(radiusScalar);
+		__m128 radiusSq = _mm_mul_ps(radius, radius);
+
+		__m128 doubleRadiusSq = _mm_mul_ps(radius, two);
+		doubleRadiusSq = _mm_mul_ps(doubleRadiusSq, doubleRadiusSq);
+
+		vec3 sphereOrigin(parentTransform(0, 3), parentTransform(1, 3), parentTransform(2, 3));
+		Vec3Packet sphereOriginPacket;
+		sphereOriginPacket.Set(sphereOrigin);
+
+		__m128 t;
+		auto result = RaySphereIntersectionSSE(rayOrigin, rayDirection, sphereOriginPacket, doubleRadiusSq, t);
+		if (_mm_movemask_ps(result) == 0)
+		{
+			return 0;
+		}
+
+		auto depthResult = _mm_cmplt_ps(_mm_sqrt_ps(_mm_div_ps(t, radius)), _mm_set1_ps(100.0f));
+		if (_mm_movemask_ps(depthResult) == 0)
+		{
+			return 0;
+		}
 
 		if (depth > maxDepthReached)
 		{
 			maxDepthReached = depth;
 		}
-
-		float t = 0.0f;
-		if (!RaySphereIntersection(rayOrigin, rayDir, sphereOrigin, radius * 2.0f, t))
-		{
-			return false;
-		}
-		else if (t / radius > 1000)
-		{
-			return false;
-		}
-
-		bool intersectsMain = false;
-
-		if (RaySphereIntersection(rayOrigin, rayDir, sphereOrigin, radius, t))
-		{
-			if (-t < minT)
-			{
-				intersectsMain = true;
-				spheresDrawn++;
-
-				Eigen::Vector4f sphereTOrigin = sphereOrigin - rayOrigin;
-				position = rayOrigin + rayDir * t;
-				normal = (rayDir * t - sphereOrigin).normalized();
-				minT = -t;
-			}
-		}
-
-		if (depth >= MAX_DEPTH)
-		{
-			return intersectsMain;
-		}
-
+		
 		for (auto i = 0; i < 9; i++)
 		{
 			auto transform = childTransforms[i];
-			float translationScale = (4.0 / 3.0) * radius;
+			float translationScale = (4.0 / 3.0) * radiusScalar;
 			transform(0, 3) *= translationScale;
 			transform(1, 3) *= translationScale;
 			transform(2, 3) *= translationScale;
 			auto worldTransform = parentTransform * transform;
 
-			if (RenderSphereFlake(rayOrigin, rayDir, worldTransform, depth + 1, radius, position, normal, minT))
-			{
-				continue;
-			}
+			RenderSphereFlakeSSE(rayOrigin, rayDirection, worldTransform, depth + 1, radiusScalar, position, normal, minT);
 		}
 
-		return false;
+		result = RaySphereIntersectionSSE(rayOrigin, rayDirection, sphereOriginPacket, radiusSq, t);
+
+		auto minTResult = _mm_cmplt_ps(t, minT);
+		result = _mm_and_ps(result, minTResult);
+
+		minT = _mm_or_ps(_mm_andnot_ps(result, minT), _mm_and_ps(result, t));
+
+		auto rPosition = rayOrigin + rayDirection * t;
+		auto rNormal = rPosition - sphereOriginPacket;
+		//Normalize(rNormal);
+
+		auto mask = _mm_movemask_ps(result);
+
+		auto pNormalX = _mm_andnot_ps(result, normal.x);
+		auto pNormalY = _mm_andnot_ps(result, normal.y);
+		auto pNormalZ = _mm_andnot_ps(result, normal.z);
+
+		auto pPositionX = _mm_andnot_ps(result, position.x);
+		auto pPositionY = _mm_andnot_ps(result, position.y);
+		auto pPositionZ = _mm_andnot_ps(result, position.z);
+
+		normal.x = _mm_or_ps(pNormalX, _mm_and_ps(result, rNormal.x));
+		normal.y = _mm_or_ps(pNormalY, _mm_and_ps(result, rNormal.y));
+		normal.z = _mm_or_ps(pNormalZ, _mm_and_ps(result, rNormal.z));
+
+		position.x = _mm_or_ps(pPositionX, _mm_and_ps(result, rPosition.x));
+		position.y = _mm_or_ps(pPositionY, _mm_and_ps(result, rPosition.y));
+		position.z = _mm_or_ps(pPositionZ, _mm_and_ps(result, rPosition.z));
+
+		return mask;
 	}
 
 	size_t m_Width;

@@ -8,19 +8,19 @@ class Camera
 	vec3 getTopLeft() const
 	{
 		auto d = getScaling();
-		return m_Position + getOrientation() * vec3(-m_AspectRatio * d, d, 1.0) + getOrientation() * vec3(0, 0, -1) * m_Zoom;
+		return m_Position + getOrientation() * vec3(-m_AspectRatio * d, d, 1.0f);
 	}
 
 	vec3 getTopRight() const
 	{
 		auto d = getScaling();
-		return m_Position + getOrientation() * vec3(m_AspectRatio * d, d, 1.0) + getOrientation() * vec3(0, 0, -1) * m_Zoom;
+		return m_Position + getOrientation() * vec3(m_AspectRatio * d, d, 1.0f);
 	}
 
 	vec3 getBottomLeft() const
 	{
 		auto d = getScaling();
-		return m_Position + getOrientation() * vec3(-m_AspectRatio * d, -d, 1.0) + getOrientation() * vec3(0, 0, -1) * m_Zoom;
+		return m_Position + getOrientation() * vec3(-m_AspectRatio * d, -d, 1.0f);
 	}
 
 	const vec3& getPosition() const
@@ -31,11 +31,6 @@ class Camera
 	void setPosition(const vec3& position)
 	{
 		m_Position = position;
-	}
-
-	vec3 getPositionWithZoom() const
-	{
-		return m_Position + getOrientation() * vec3(0, 0, -1) * m_Zoom;
 	}
 
 	quat getOrientation() const

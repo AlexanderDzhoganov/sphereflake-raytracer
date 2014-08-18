@@ -26,11 +26,24 @@ struct Vec3Packet
 		z = _mm_set_ps(v.z, v.z, v.z, v.z);
 	}
 
-	void Set(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c, const glm::vec3& d)
+	void Set(const vec3& a, const vec3& b, const vec3& c, const vec3& d)
 	{
 		x = _mm_set_ps(a.x, b.x, c.x, d.x);
 		y = _mm_set_ps(a.y, b.y, c.y, d.y);
 		z = _mm_set_ps(a.z, b.z, c.z, d.z);
+	}
+
+	vec3 Extract(size_t index)
+	{
+		switch (index)
+		{
+		case 0: return vec3(x0, y0, z0);
+		case 1: return vec3(x1, y1, z1);
+		case 2: return vec3(x2, y2, z2);
+		case 3: return vec3(x3, y3, z3);
+		}
+
+		return vec3(0.f);
 	}
 
 };
@@ -81,33 +94,58 @@ __forceinline __m128 Dot(const Vec3Packet& a, const Vec3Packet& b)
 
 __forceinline __m128 Length2(const Vec3Packet& a)
 {
-	auto x2 = _mm_mul_ps(a.x, a.x);
+	auto temp = _mm_mul_ps(a.x, a.x);
 	auto y2 = _mm_mul_ps(a.y, a.y);
 	auto z2 = _mm_mul_ps(a.z, a.z);
-	return _mm_add_ps(_mm_add_ps(x2, y2), z2);
+
+	temp = _mm_add_ps(temp, y2);
+	temp = _mm_add_ps(temp, z2);
+	return temp;
 }
 
-__forceinline int RaySphereIntersection(const Vec3Packet& rayOrigin, const Vec3Packet& rayDirection, const Vec3Packet& sphereOrigin, __m128 sphereRadius, __m128& t)
+__forceinline void Normalize(Vec3Packet& a)
 {
-	// Eigen::Vector4f sphereTOrigin = sphereOrigin - rayOrigin;
-	Vec3Packet sphereTOrigin = sphereOrigin - rayOrigin;
-	
-	//t = rayDirection.dot(sphereTOrigin);
-	t = Dot(rayDirection, sphereTOrigin);
+	auto temp = _mm_mul_ps(a.x, a.x);
+	auto y2 = _mm_mul_ps(a.y, a.y);
+	auto z2 = _mm_mul_ps(a.z, a.z);
 
-	// Eigen::Vector4f closestPoint = rayDirection * t;
-	Vec3Packet closestPoint = rayDirection * t;
+	temp = _mm_add_ps(temp, y2);
+	temp = _mm_add_ps(temp, z2);
+	temp = _mm_sqrt_ps(temp);
 
-	// Eigen::Vector4f diff = closestPoint - sphereTOrigin;
-	Vec3Packet diff = closestPoint - sphereTOrigin;
+	a.x = _mm_div_ps(a.x, temp);
+	a.y = _mm_div_ps(a.y, temp);
+	a.z = _mm_div_ps(a.z, temp);
+}
 
-	//float dist = diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2];
-	__m128 dist = Length2(diff);
+__forceinline __m128 RaySphereIntersectionSSE(const Vec3Packet& rayOrigin, const Vec3Packet& rayDirection, const Vec3Packet& sphereOrigin, __m128 sphereRadiusSq, __m128& t)
+{
+	static const __m128 zero = _mm_set1_ps(0.0f);
 
-	// return dist <= sphereRadius * sphereRadius
-	__m128 sphereRadiusSq = _mm_mul_ps(sphereRadius, sphereRadius);
-	__m128 result = _mm_cmple_ps(dist, sphereRadiusSq);
-	return _mm_movemask_ps(result);
+	Vec3Packet L = sphereOrigin - rayOrigin;
+	__m128 tca = Dot(L, rayDirection);
+	auto result = _mm_cmpge_ps(tca, zero);
+	if (_mm_movemask_ps(result) == 0)
+	{
+		return result;
+	}
+
+	auto d2 = _mm_sub_ps(Dot(L, L), _mm_mul_ps(tca, tca));
+
+	result = _mm_or_ps(result, _mm_cmple_ps(d2, sphereRadiusSq));
+	if (_mm_movemask_ps(result) == 0)
+	{
+		return result;
+	}
+
+	__m128 thc = _mm_sqrt_ps(_mm_sub_ps(sphereRadiusSq, d2));
+
+	__m128 t0 = _mm_add_ps(tca, thc);
+	__m128 t1 = _mm_sub_ps(tca, thc);
+
+	auto tresult = _mm_cmple_ps(t0, t1);
+	t = _mm_or_ps(_mm_and_ps(tresult, t0), _mm_andnot_ps(tresult, t1));
+	return result;
 }
 
 #endif
