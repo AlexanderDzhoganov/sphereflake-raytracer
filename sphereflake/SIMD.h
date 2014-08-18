@@ -125,6 +125,7 @@ __forceinline __m128 RaySphereIntersectionSSE(const Vec3Packet& rayOrigin, const
 	Vec3Packet L = sphereOrigin - rayOrigin;
 	__m128 tca = Dot(L, rayDirection);
 	auto result = _mm_cmpge_ps(tca, zero);
+
 	if (_mm_movemask_ps(result) == 0)
 	{
 		return result;
@@ -132,7 +133,7 @@ __forceinline __m128 RaySphereIntersectionSSE(const Vec3Packet& rayOrigin, const
 
 	auto d2 = _mm_sub_ps(Dot(L, L), _mm_mul_ps(tca, tca));
 
-	result = _mm_or_ps(result, _mm_cmple_ps(d2, sphereRadiusSq));
+	result = _mm_cmple_ps(d2, sphereRadiusSq);
 	if (_mm_movemask_ps(result) == 0)
 	{
 		return result;
@@ -145,6 +146,7 @@ __forceinline __m128 RaySphereIntersectionSSE(const Vec3Packet& rayOrigin, const
 
 	auto tresult = _mm_cmple_ps(t0, t1);
 	t = _mm_or_ps(_mm_and_ps(tresult, t0), _mm_andnot_ps(tresult, t1));
+
 	return result;
 }
 

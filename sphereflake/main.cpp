@@ -206,25 +206,27 @@ void UploadGBufferTextures()
 {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, GBufferPositionsTexture);
+
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, GBufferPositionsPBO);
 	glBufferData(GL_PIXEL_UNPACK_BUFFER, RT_W * RT_H * 4 * sizeof(float), rts.GetGBuffer().positions.data(), GL_STREAM_DRAW);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, RT_W, RT_H, 0, GL_RGBA, GL_FLOAT, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, RT_W, RT_H, 0, GL_BGRA, GL_FLOAT, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
 
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, GBufferNormalsTexture);
-	glBufferData(GL_PIXEL_UNPACK_BUFFER, RT_W * RT_H * 4 * sizeof(float), rts.GetGBuffer().normals.data(), GL_STREAM_DRAW);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, RT_W, RT_H, 0, GL_RGBA, GL_FLOAT, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-}
 
-void UploadTexture()
-{
-	glBufferData(GL_PIXEL_UNPACK_BUFFER, RT_W * RT_H * 4, rts.GetBitmap().data(), GL_STREAM_DRAW);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, RT_W, RT_H, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, GBufferNormalsPBO);
+	glBufferData(GL_PIXEL_UNPACK_BUFFER, RT_W * RT_H * 4 * sizeof(float), rts.GetGBuffer().normals.data(), GL_STREAM_DRAW);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, RT_W, RT_H, 0, GL_BGRA, GL_FLOAT, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 }
 
 int main(int argc, char* argv [])
@@ -256,7 +258,6 @@ int main(int argc, char* argv [])
 	ReloadShader();
 	glEnable(GL_TEXTURE_2D);
 	CreateBuffers();
-	//CreateTexture();
 	CreateGBufferTextures();
 
 	glViewport(0, 0, WND_WIDTH, WND_HEIGHT);
