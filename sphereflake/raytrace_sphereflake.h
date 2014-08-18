@@ -11,33 +11,21 @@ struct Color
 
 struct GBuffer
 {
-	std::vector<Eigen::Vector3f> positions;
-	std::vector<Eigen::Vector3f> normals;
+	std::vector<Eigen::Vector4f> positions;
+	std::vector<Eigen::Vector4f> normals;
 };
 
-std::vector<float> sinLookup;
-std::vector<float> cosLookup;
+#define MAX_DEPTH 4
 
-#define MAX_DEPTH 16
-
-void PrecomputeTrig()
+Eigen::Matrix4f createRotation(Eigen::Vector4f rot)
 {
-	for (auto i = 0u; i < 361; i++)
-	{
-		sinLookup.push_back(sin(radians((float)i)));
-		cosLookup.push_back(cos(radians((float)i)));
-	}
-}
+	float sinx = sinf(rot[0]);
+	float siny = sinf(rot[1]);
+	float sinz = sinf(rot[2]);
 
-Eigen::Matrix4f createRotation(Eigen::Vector3f rot)
-{
-	const float& sinx = sinLookup[rot[0]];
-	const float& siny = sinLookup[rot[1]];
-	const float& sinz = sinLookup[rot[2]];
-
-	const float& cosx = cosLookup[rot[0]];
-	const float& cosy = cosLookup[rot[1]];
-	const float& cosz = cosLookup[rot[2]];
+	float cosx = cosf(rot[0]);
+	float cosy = cosf(rot[1]);
+	float cosz = cosf(rot[2]);
 
 	Eigen::Matrix4f result = Eigen::Matrix4f::Identity();
 	result(0, 0) = cosy * cosz;
@@ -67,7 +55,6 @@ class RaytraceSphereflake
 		m_GBuffer.positions.resize(width * height);
 		m_GBuffer.normals.resize(width * height);
 
-		PrecomputeTrig();
 		PrecomputeChildTransforms();
 
 		auto threadCount = std::thread::hardware_concurrency();
@@ -104,10 +91,10 @@ class RaytraceSphereflake
 	bool m_Deinitialize = false;
 	std::mutex m_Mutex;
 	volatile int finishedThreads = 0;
-	Eigen::Vector3f rayOrigin;
-	Eigen::Vector3f topLeft;
-	Eigen::Vector3f topRight;
-	Eigen::Vector3f bottomLeft;
+	Eigen::Vector4f rayOrigin;
+	Eigen::Vector4f topLeft;
+	Eigen::Vector4f topRight;
+	Eigen::Vector4f bottomLeft;
 
 	void DoFrame(Camera* camera)
 	{
@@ -116,39 +103,46 @@ class RaytraceSphereflake
 		auto cameraTopRight = camera->getTopRight();
 		auto cameraBottomLeft = camera->getBottomLeft();
 
-		rayOrigin = Eigen::Vector3f(cameraPos.x, cameraPos.y, cameraPos.z);
-		topLeft = Eigen::Vector3f(cameraTopLeft.x, cameraTopLeft.y, cameraTopLeft.z);
-		topRight = Eigen::Vector3f(cameraTopRight.x, cameraTopRight.y, cameraTopRight.z);
-		bottomLeft = Eigen::Vector3f(cameraBottomLeft.x, cameraBottomLeft.y, cameraBottomLeft.z);
+		rayOrigin = Eigen::Vector4f(cameraPos.x, cameraPos.y, cameraPos.z, 0.0f);
+		topLeft = Eigen::Vector4f(cameraTopLeft.x, cameraTopLeft.y, cameraTopLeft.z, 0.0f);
+		topRight = Eigen::Vector4f(cameraTopRight.x, cameraTopRight.y, cameraTopRight.z, 0.0f);
+		bottomLeft = Eigen::Vector4f(cameraBottomLeft.x, cameraBottomLeft.y, cameraBottomLeft.z, 0.0f);
 	}
 
-	void DoImagePart(size_t _x, size_t _y, size_t width, size_t height)
+	void DoImagePart(int _x, int _y, int width, int height)
 	{
+		std::mt19937 mt;
+		mt.seed(time(NULL));
+
+	//	std::uniform_int_distribution<int> widthRand(_x, _x + width - 1);
+	//	std::uniform_int_distribution<int> heightRand(_y, _y + height - 1);
+
+		std::uniform_int_distribution<int> widthRand(0, m_Width - 1);
+		std::uniform_int_distribution<int> heightRand(0, m_Height - 1);
+
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 		for (;;)
 		{
-			for (auto x = _x; x < _x + width; x++)
-			{
-				for (auto y = _y; y < _y + height; y++)
-				{
-					vec2 uv = vec2((float) x / (float) m_Width, (float) y / (float) m_Height);
+			auto x = widthRand(mt);
+			auto y = heightRand(mt);
+			vec2 uv = vec2((float) x / (float) m_Width, (float) y / (float) m_Height);
 
-					Eigen::Vector3f targetDirection = topLeft + (topRight - topLeft) * uv[0] + (bottomLeft - topLeft) * uv[1];
-					Eigen::Vector3f rayDirection = (targetDirection - rayOrigin).normalized();
+			Eigen::Vector4f targetDirection = topLeft + (topRight - topLeft) * uv[0] + (bottomLeft - topLeft) * uv[1];
+			Eigen::Vector4f rayDirection = (targetDirection - rayOrigin).normalized();
 
-					Eigen::Vector3f position = Eigen::Vector3f(0, 0, 0);
-					Eigen::Vector3f normal = Eigen::Vector3f(0, 0, 0);
+			Eigen::Vector4f position = Eigen::Vector4f(0, 0, 0, 0);
+			Eigen::Vector4f normal = Eigen::Vector4f(0, 0, 0, 0);
 
-					Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
-					float minT = 1e32;
+			Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
+			float minT = 1e32;
 
-					RenderSphereFlake(rayOrigin, rayDirection, transform, 0, 3.0f, position, normal, minT);
+			RenderSphereFlake(rayOrigin, rayDirection, transform, 0, 3.0f, position, normal, minT);
 					
-					m_GBuffer.positions[x + y * m_Width] = position;
-					m_GBuffer.normals[x + y * m_Width] = normal;
-				}
-			}
+			m_GBuffer.positions[x + y * m_Width] = position;
+			m_GBuffer.normals[x + y * m_Width] = normal;
+
+			raysPerSecond++;
 
 			if (m_Deinitialize)
 			{
@@ -157,15 +151,51 @@ class RaytraceSphereflake
 		}
 	}
 
-	inline bool RaySphereIntersection(const Eigen::Vector3f& rayOrigin, const Eigen::Vector3f& rayDirection, const Eigen::Vector3f& sphereOrigin, float sphereRadius, float& t)
+	inline bool RaySphereIntersection(const Eigen::Vector4f& rayOrigin, const Eigen::Vector4f& rayDirection, const Eigen::Vector4f& sphereOrigin, float sphereRadius, float& tOut)
 	{
-		Eigen::Vector3f sphereTOrigin = sphereOrigin - rayOrigin;
-		t = rayDirection.dot(sphereTOrigin);
-		Eigen::Vector3f closestPoint = rayDirection * t;
-		Eigen::Vector3f diff = closestPoint - sphereTOrigin;
+		Eigen::Vector4f sphereTOrigin = sphereOrigin - rayOrigin;
+		float t = rayDirection.dot(sphereTOrigin);
+		Eigen::Vector4f closestPoint = rayDirection * t;
+
+		Eigen::Vector4f diff = closestPoint - sphereTOrigin;
+
 		float dist = diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2];
-		return dist <= sphereRadius * sphereRadius;
+		if (dist <= sphereRadius * sphereRadius)
+		{
+			tOut = t;
+			return true;
+		}
+
+		return false;
 	}
+	/*
+	inline bool RaySphereIntersection(const Eigen::Vector4f& rayOrigin, const Eigen::Vector4f& rayDirection, const Eigen::Vector4f& sphereOrigin, float sphereRadius, float& tOut)
+	{
+		Eigen::Vector4f h = sphereOrigin - rayOrigin;
+		float lf = rayDirection.dot(h);
+		float s = powf(sphereRadius, 2) - h.dot(h) + powf(lf, 2);
+
+		if (s < 0.0)
+		{
+			return false;
+		}
+
+		Eigen::Vector4f sphereTOrigin = sphereOrigin - rayOrigin;
+		float t = rayDirection.dot(sphereTOrigin);
+		Eigen::Vector4f closestPoint = rayDirection * t;
+		Eigen::Vector4f diff = closestPoint - sphereTOrigin;
+		float dist = diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2];
+		if (dist <= sphereRadius * sphereRadius)
+		{
+			return true;
+		}
+		z
+		tOut = t;
+		return true;
+	}*/
+
+	int maxDepthReached = 0;
+	long long raysPerSecond = 0;
 
 	private:
 	std::vector<Eigen::Matrix4f> childTransforms;
@@ -174,17 +204,17 @@ class RaytraceSphereflake
 	{
 		for (auto i = 0u; i < 6; i++)
 		{
-			int s = i * 60;
-			int t = 90;
-			const auto& coss = cosLookup[s];
-			const auto& sins = sinLookup[s];
-			const auto& cost = cosLookup[t];
-			const auto& sint = sinLookup[t];
+			float s = (float)i * 60.0f;
+			float t = 90.0f;
+			const auto& coss = cosf(s);
+			const auto& sins = sinf(s);
+			const auto& cost = cosf(t);
+			const auto& sint = sinf(t);
 
-			Eigen::Vector3f displacement(coss * sint, sins * sint, cost);
+			Eigen::Vector4f displacement(coss * sint, sins * sint, cost, 0.0f);
 			displacement.normalize();
 
-			auto transform = createRotation(Eigen::Vector3f(90, (90 + i * 60) % 360, 0));
+			auto transform = createRotation(Eigen::Vector4f(90.0f, (90 + i * 60) % 360, 0.0f, 0.0f));
 			transform(0, 3) = displacement[0];
 			transform(1, 3) = displacement[1];
 			transform(2, 3) = displacement[2];
@@ -193,34 +223,36 @@ class RaytraceSphereflake
 
 		for (auto i = 0u; i < 3; i++)
 		{
-			int s = (30 + i * 120) % 360;
-			int t = 30;
-			const auto& coss = cosLookup[s];
-			const auto& sins = sinLookup[s];
-			const auto& cost = cosLookup[t];
-			const auto& sint = sinLookup[t];
+			float s = (30 + i * 120) % 360;
+			float t = 30.0f;
+			const auto& coss = cosf(s);
+			const auto& sins = sinf(s);
+			const auto& cost = cosf(t);
+			const auto& sint = sinf(t);
 
-			Eigen::Vector3f displacement(coss * sint, sins * sint, cost);
+			Eigen::Vector4f displacement(coss * sint, sins * sint, cost, 0.0f);
 			displacement.normalize();
 
-			auto transform = createRotation(Eigen::Vector3f(0.0, 360.0f - i * 60, 270.0f));
+			auto transform = createRotation(Eigen::Vector4f(0.0, 360.0f - i * 60.0f, 270.0f, 0.0f));
 			transform(0, 3) = displacement[0];
 			transform(1, 3) = displacement[1];
 			transform(2, 3) = displacement[2];
 			childTransforms.push_back(transform);
 		}
 	}
+
 	
-	bool RenderSphereFlake(const Eigen::Vector3f& rayOrigin, const Eigen::Vector3f& rayDir, const Eigen::Matrix4f& parentTransform, int depth, float parentRadius, Eigen::Vector3f& position, Eigen::Vector3f& normal, float& minT)
+	bool RenderSphereFlake(const Eigen::Vector4f& rayOrigin, const Eigen::Vector4f& rayDir, const Eigen::Matrix4f& parentTransform, int depth, float parentRadius, Eigen::Vector4f& position, Eigen::Vector4f& normal, float& minT)
 	{
 		auto radius = (1.0 / 3.0) * parentRadius;
-		Eigen::Vector3f sphereOrigin(parentTransform(0, 3), parentTransform(1, 3), parentTransform(2, 3));
+		Eigen::Vector4f sphereOrigin(parentTransform(0, 3), parentTransform(1, 3), parentTransform(2, 3), 0.0f);
+
+		if (depth > maxDepthReached)
+		{
+			maxDepthReached = depth;
+		}
 
 		float t;
-		if (!RaySphereIntersection(rayOrigin, rayDir, sphereOrigin, radius * 2.0f, t))
-		{
-			return false;
-		}
 
 		bool intersectsMain = false;
 		if (RaySphereIntersection(rayOrigin, rayDir, sphereOrigin, radius, t))
@@ -230,9 +262,9 @@ class RaytraceSphereflake
 				intersectsMain = true;
 				spheresDrawn++;
 
-				Eigen::Vector3f sphereTOrigin = sphereOrigin - rayOrigin;
+				Eigen::Vector4f sphereTOrigin = sphereOrigin - rayOrigin;
 				position = rayOrigin + rayDir * t;
-				normal = (rayDir * t - sphereOrigin).normalized();
+				normal = (position - sphereOrigin).normalized();
 				minT = -t;
 			}
 		}
@@ -242,29 +274,27 @@ class RaytraceSphereflake
 			return intersectsMain;
 		}
 
-		for (auto i = 0; i < 6; i++)
+		for (auto i = 0; i < 9; i++)
 		{
 			auto transform = childTransforms[i];
 			float translationScale = radius + (1.0 / 3.0) * radius;
 			transform(0, 3) *= translationScale;
 			transform(1, 3) *= translationScale;
 			transform(2, 3) *= translationScale;
+			
+			auto worldTransform = parentTransform * transform;
+			Eigen::Vector4f childSphereOrigin(worldTransform(0, 3), worldTransform(1, 3), worldTransform(2, 3), 0.0f);
 
-			if (RenderSphereFlake(rayOrigin, rayDir, parentTransform * transform, depth + 1, radius, position, normal, minT))
+			if (!RaySphereIntersection(rayOrigin, rayDir, childSphereOrigin, radius * (1.0 / 3.0) * 2.0f, t))
 			{
-				return false;
+				continue;
 			}
-		}
-		
-		for (auto i = 0; i < 3; i++)
-		{
-			auto transform = childTransforms[6 + i];
-			float translationScale = radius + (1.0 / 3.0) * radius;
-			transform(0, 3) *= translationScale;
-			transform(1, 3) *= translationScale;
-			transform(2, 3) *= translationScale;
-		
-			if (RenderSphereFlake(rayOrigin, rayDir, parentTransform * transform, depth + 1, radius, position, normal, minT))
+			else if (-t / radius > 300)
+			{
+				continue;
+			}
+
+			if (RenderSphereFlake(rayOrigin, rayDir, worldTransform, depth + 1, radius, position, normal, minT))
 			{
 				return false;
 			}

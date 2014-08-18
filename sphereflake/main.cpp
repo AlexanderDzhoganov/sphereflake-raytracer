@@ -4,6 +4,7 @@
 #include <fstream>
 #include <vector>
 #include <unordered_map>
+#include <random>
 #include <thread>
 #include <functional>
 #include <mutex>
@@ -26,6 +27,7 @@
 
 using namespace glm;
 
+#define EIGEN_NO_MALLOC
 #include <Eigen/Dense>
 
 #include "matmult.h"
@@ -202,15 +204,15 @@ void UploadGBufferTextures()
 {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, GBufferPositionsTexture);
-	glBufferData(GL_PIXEL_UNPACK_BUFFER, RT_W * RT_H * 3 * sizeof(float), rts.GetGBuffer().positions.data(), GL_STREAM_DRAW);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, RT_W, RT_H, 0, GL_RGB, GL_FLOAT, 0);
+	glBufferData(GL_PIXEL_UNPACK_BUFFER, RT_W * RT_H * 4 * sizeof(float), rts.GetGBuffer().positions.data(), GL_STREAM_DRAW);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, RT_W, RT_H, 0, GL_RGBA, GL_FLOAT, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, GBufferNormalsTexture);
-	glBufferData(GL_PIXEL_UNPACK_BUFFER, RT_W * RT_H * 3 * sizeof(float), rts.GetGBuffer().normals.data(), GL_STREAM_DRAW);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, RT_W, RT_H, 0, GL_RGB, GL_FLOAT, 0);
+	glBufferData(GL_PIXEL_UNPACK_BUFFER, RT_W * RT_H * 4 * sizeof(float), rts.GetGBuffer().normals.data(), GL_STREAM_DRAW);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, RT_W, RT_H, 0, GL_RGBA, GL_FLOAT, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 }
@@ -282,6 +284,13 @@ int main(int argc, char* argv [])
 			std::stringstream ss;
 			ss << "sphereflake fps: ";
 			ss << fpsCounter;
+			ss << " depth: ";
+			ss << rts.maxDepthReached;
+			rts.maxDepthReached = 0;
+			ss << " rays per second: ";
+			ss << rts.raysPerSecond / 1000;
+			ss << "k";
+			rts.raysPerSecond = 0;
 
 			glfwSetWindowTitle(window, ss.str().c_str());
 			fpsTimeAccum = 0.0;
