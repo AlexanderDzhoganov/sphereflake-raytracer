@@ -1,7 +1,7 @@
 #ifndef __RAYTRACE_SPHEREFLAKE_H
 #define __RAYTRACE_SPHEREFLAKE_H
 
-#define MAX_DEPTH 64
+#define MAX_DEPTH 32
 
 struct GBuffer
 {
@@ -22,16 +22,6 @@ class RaytraceSphereflake
 		m_GBuffer.normals.resize(width * height);
 
 		Precomputem_ChildTransforms();
-
-		auto threadCount = std::thread::hardware_concurrency();
-
-		size_t splitW = m_Width;
-		size_t splitH = m_Height / threadCount;
-
-		for (auto i = 0u; i < threadCount; i++)
-		{
-			m_Threads.push_back(std::make_unique<std::thread>(std::bind(&RaytraceSphereflake::DoImagePartSSE, this, 0, splitH * i, m_Width, splitH)));
-		}
 	}
 
 	~RaytraceSphereflake() 
@@ -41,6 +31,19 @@ class RaytraceSphereflake
 		for (auto&& i: m_Threads)
 		{
 			i->join();
+		}
+	}
+
+	void Initialize()
+	{
+		auto threadCount = std::thread::hardware_concurrency();
+
+		size_t splitW = m_Width;
+		size_t splitH = m_Height / threadCount;
+
+		for (auto i = 0u; i < threadCount; i++)
+		{
+			m_Threads.push_back(std::make_unique<std::thread>(std::bind(&RaytraceSphereflake::DoImagePartSSE, this)));
 		}
 	}
 
@@ -58,7 +61,7 @@ class RaytraceSphereflake
 	}
 
 	private:
-	void DoImagePartSSE(int __x, int __y, int __width, int __height)
+	void DoImagePartSSE()
 	{
 		std::mt19937 mt;
 		mt.seed(time(NULL));
@@ -73,11 +76,11 @@ class RaytraceSphereflake
 			auto x0 = widthRand(mt);
 			auto y0 = heightRand(mt);
 
-			size_t xa[4] = { x0, x0 + 1, x0,     x0 + 1 };
-			size_t ya[4] = { y0, y0,     y0 + 1, y0 + 1 };
+			size_t xa[4] = { x0, x0 + 1, x0, x0 + 1};
+			size_t ya[4] = { y0, y0, y0 + 1, y0 + 1};
 
-			auto x = _mm_set_ps(xa[0], xa[1], xa[2], xa[3]);
-			auto y = _mm_set_ps(ya[0], ya[1], ya[2], ya[3]);
+			auto x = _mm_set_ps(xa[3], xa[2], xa[1], xa[0]);
+			auto y = _mm_set_ps(ya[3], ya[2], ya[1], ya[0]);
 
 			auto width = _mm_set1_ps(m_Width);
 			auto height = _mm_set1_ps(m_Height);
@@ -85,7 +88,10 @@ class RaytraceSphereflake
 			auto uvx = _mm_div_ps(x, width);
 			auto uvy = _mm_div_ps(y, height);
 
-			auto targetDirection = m_TopLeft + (m_TopRight - m_TopLeft) * uvx + (m_BottomLeft - m_TopLeft) * uvy;
+			auto directionHorizontalPart = m_TopLeft + (m_TopRight - m_TopLeft) * uvx;
+			auto directionVerticalPart = (m_BottomLeft - m_TopLeft) * uvy;
+
+			auto targetDirection = directionHorizontalPart + directionVerticalPart;
 			auto rayDirection = targetDirection - m_RayOrigin;
 			Normalize(rayDirection);
 
@@ -98,12 +104,15 @@ class RaytraceSphereflake
 			Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
 			__m128 minT = _mm_set1_ps(std::numeric_limits<float>::max());
 
-			RenderSphereFlakeSSE(m_RayOrigin, rayDirection, transform, 3.f, 0, minT, position, normal);
+			auto result = RenderSphereFlakeSSE(m_RayOrigin, rayDirection, transform, 3.f, 0, minT, position, normal);
 
 			for (auto q = 0u; q < 4; q++)
 			{
-				m_GBuffer.positions[xa[q] + ya[q] * m_Width] = vec4(position.Extract(q), 1.0f);
-				m_GBuffer.normals[xa[q] + ya[q] * m_Width] = vec4(normal.Extract(q), 1.0f);
+				auto idx = xa[q] + ya[q] * m_Width;
+				auto rposition = vec4(position.Extract(q), 1.0f);
+				auto rnormal = vec4(normal.Extract(q), 1.0f);
+				m_GBuffer.positions[idx] = rposition;
+				m_GBuffer.normals[idx] = rnormal;
 				raysPerSecond++;
 			}
 			
@@ -180,7 +189,7 @@ class RaytraceSphereflake
 		return result;
 	}
 
-	void RenderSphereFlakeSSE
+	__m128 RenderSphereFlakeSSE
 	(
 		const Vec3Packet& rayOrigin,
 		const Vec3Packet& rayDirection,
@@ -195,10 +204,11 @@ class RaytraceSphereflake
 		static const __m128 oneThird = _mm_set1_ps(1.0 / 3.0);
 		static const __m128 two = _mm_set1_ps(2.0);
 		static const __m128 hundred = _mm_set1_ps(100.0f);
+		static const __m128 zero = _mm_set1_ps(0.0f);
 
 		if (depth >= MAX_DEPTH)
 		{
-			return;
+			return zero;
 		}
 
 		float radiusScalar = parentRadius / 3.0;
@@ -216,13 +226,13 @@ class RaytraceSphereflake
 		auto result = RaySphereIntersectionSSE(rayOrigin, rayDirection, sphereOriginPacket, doubleRadiusSq, t);
 		if (_mm_movemask_ps(result) == 0)
 		{
-			return;
+			return result;
 		}
 
 		auto depthResult = _mm_cmplt_ps(_mm_sqrt_ps(_mm_div_ps(t, radius)), hundred);
 		if (_mm_movemask_ps(depthResult) == 0)
 		{
-			return;
+			return result;
 		}
 
 		if (depth > maxDepthReached)
@@ -249,7 +259,7 @@ class RaytraceSphereflake
 
 		if (_mm_movemask_ps(result) == 0)
 		{
-			return;
+			return result;
 		}
 
 		minT = _mm_or_ps(_mm_andnot_ps(result, minT), _mm_and_ps(result, t));
@@ -265,6 +275,7 @@ class RaytraceSphereflake
 		position.z = _mm_or_ps(pPositionZ, _mm_and_ps(result, rPosition.z));
 
 		auto rNormal = rPosition - sphereOriginPacket;
+		Normalize(rNormal);
 
 		auto pNormalX = _mm_andnot_ps(result, normal.x);
 		auto pNormalY = _mm_andnot_ps(result, normal.y);
@@ -273,8 +284,7 @@ class RaytraceSphereflake
 		normal.x = _mm_or_ps(pNormalX, _mm_and_ps(result, rNormal.x));
 		normal.y = _mm_or_ps(pNormalY, _mm_and_ps(result, rNormal.y));
 		normal.z = _mm_or_ps(pNormalZ, _mm_and_ps(result, rNormal.z));
-		
-		Normalize(normal);
+		return result;
 	}
 
 	size_t m_Width;

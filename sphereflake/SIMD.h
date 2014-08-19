@@ -6,17 +6,17 @@ struct Vec3Packet
 
 	union
 	{
-		__m128 x; float x0; float x1; float x2; float x3;
+		__m128 x; struct { float x0; float x1; float x2; float x3; };
 	};
 	
 	union
 	{
-		__m128 y; float y0; float y1; float y2; float y3;
+		__m128 y; struct { float y0; float y1; float y2; float y3; };
 	};
 
 	union
 	{
-		__m128 z; float z0; float z1; float z2; float z3;
+		__m128 z; struct { float z0; float z1; float z2; float z3; };
 	};
 
 	void Set(const glm::vec3& v)

@@ -3,6 +3,8 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <mutex>
+#include <atomic>
 #include <random>
 #include <thread>
 #include <memory>
@@ -247,6 +249,9 @@ int main(int argc, char* argv [])
 	double lastXpos = 0.0;
 	double lastYpos = 0.0;
 
+	rts.UpdateCamera(&camera);
+	rts.Initialize();
+
 	while (!glfwWindowShouldClose(window))
 	{
 		double time = glfwGetTime();
@@ -323,8 +328,8 @@ int main(int argc, char* argv [])
 
 		SetUniformFloat("time", glfwGetTime());
 		SetUniformVec3("cameraPosition", camera.getPosition());
-		SetUniformFloat("fbWidth", width);
-		SetUniformFloat("fbHeight", height);
+		//SetUniformFloat("fbWidth", width);
+		//SetUniformFloat("fbHeight", height);
 
 		rts.UpdateCamera(&camera);
 		UploadGBufferTextures();
