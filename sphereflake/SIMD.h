@@ -118,13 +118,13 @@ __forceinline void Normalize(Vec3Packet& a)
 	a.z = _mm_div_ps(a.z, temp);
 }
 
+static const __m128 sseZero = _mm_set1_ps(0.0f);
+
 __forceinline __m128 RaySphereIntersectionSSE(const Vec3Packet& rayOrigin, const Vec3Packet& rayDirection, const Vec3Packet& sphereOrigin, __m128 sphereRadiusSq, __m128& t)
 {
-	static const __m128 zero = _mm_set1_ps(0.0f);
-
 	Vec3Packet L = sphereOrigin - rayOrigin;
 	__m128 tca = Dot(L, rayDirection);
-	auto result = _mm_cmpge_ps(tca, zero);
+	auto result = _mm_cmpge_ps(tca, sseZero);
 
 	if (_mm_movemask_ps(result) == 0)
 	{
@@ -147,6 +147,23 @@ __forceinline __m128 RaySphereIntersectionSSE(const Vec3Packet& rayOrigin, const
 	auto tresult = _mm_cmple_ps(t0, t1);
 	t = _mm_or_ps(_mm_and_ps(tresult, t0), _mm_andnot_ps(tresult, t1));
 
+	return result;
+}
+
+__forceinline __m128 RayBoundingSphereIntersectionSSE(const Vec3Packet& rayOrigin, const Vec3Packet& rayDirection, const Vec3Packet& sphereOrigin, __m128 sphereRadiusSq)
+{
+	Vec3Packet L = sphereOrigin - rayOrigin;
+	__m128 tca = Dot(L, rayDirection);
+	auto result = _mm_cmpge_ps(tca, sseZero);
+
+	if (_mm_movemask_ps(result) == 0)
+	{
+		return result;
+	}
+
+	auto d2 = _mm_sub_ps(Dot(L, L), _mm_mul_ps(tca, tca));
+	result = _mm_cmple_ps(d2, sphereRadiusSq);
+	
 	return result;
 }
 

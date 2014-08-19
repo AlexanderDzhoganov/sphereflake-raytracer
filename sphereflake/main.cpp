@@ -15,8 +15,9 @@
 #define GLFW_DLL
 #include <GLFW/glfw3.h>
 
-#define GLM_FORCE_AVX
+#define GLM_FORCE_RADIANS
 #include <glm.hpp>
+#include <gtc/matrix_transform.hpp>
 #include <gtc/quaternion.hpp>
 #include <gtc/type_ptr.hpp>
 #include <gtx/quaternion.hpp>
@@ -28,159 +29,20 @@ using namespace glm;
 #define EIGEN_NO_MALLOC
 #include <Eigen/Dense>
 
-#include "SIMD.h"
-#include "camera.h"
-#include "raytrace_sphereflake.h"
-
 #define RT_W 1280
 #define RT_H 720
 
 #define WND_WIDTH 1280
 #define WND_HEIGHT 720
 
+#include "SIMD.h"
+#include "camera.h"
+#include "raytrace_sphereflake.h"
+#include "GL.h"
+#include "SSAO.h"
+
 Camera camera;
 RaytraceSphereflake rts(RT_W, RT_H);
-GLuint program;
-
-GLuint CreateShader(const std::string& source, GLenum shaderType)
-{
-	auto shader = glCreateShader(shaderType);
-	const char* src[1] = { source.c_str() };
-
-	glShaderSource(shader, 1, src, nullptr);
-	glCompileShader(shader);
-
-	GLint compileStatus = 0;
-	glGetShaderiv(shader, GL_COMPILE_STATUS, &compileStatus);
-	if (compileStatus == GL_FALSE)
-	{
-		GLint logLength = 0;
-		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logLength);
-
-		std::string log;
-		log.resize(logLength);
-
-		glGetShaderInfoLog(shader, log.length(), &logLength, (char*) log.c_str());
-
-		std::cout << "Shader compile error" << std::endl;
-		std::cout << log << std::endl;
-
-		glDeleteShader(shader);
-		return 0;
-	}
-
-	return shader;
-}
-
-void LoadProgram()
-{
-	std::ifstream ifsVertex("vertex.glsl");
-	std::string vertSource((std::istreambuf_iterator<char>(ifsVertex)), std::istreambuf_iterator<char>());
-
-	std::ifstream ifsFrag("sphereflake.glsl");
-	std::string fragSource((std::istreambuf_iterator<char>(ifsFrag)), std::istreambuf_iterator<char>());
-
-	program = glCreateProgram();
-	auto vertShader = CreateShader(vertSource, GL_VERTEX_SHADER);
-	auto fragShader = CreateShader(fragSource, GL_FRAGMENT_SHADER);
-
-	glAttachShader(program, vertShader);
-	glAttachShader(program, fragShader);
-	glLinkProgram(program);
-
-	GLint linkStatus = 0;
-	glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
-	if (linkStatus == GL_FALSE)
-	{
-		GLint logLength = 0;
-		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLength);
-
-		std::string log;
-		log.resize(logLength);
-
-		glGetProgramInfoLog(program, log.length(), &logLength, (GLchar*) log.c_str());
-
-		std::cout << "Program link error" << std::endl;
-		std::cout << log << std::endl;
-
-		glDeleteProgram(program);
-	}
-
-	glUseProgram(program);
-}
-
-void SetUniformVec3(const std::string& name, const vec3& v)
-{
-	auto loc = glGetUniformLocation(program, name.c_str());
-	if (loc == -1)
-	{
-		std::cout << "uniform not found " << name << std::endl;
-		return;
-	}
-
-	glUniform3fv(loc, 1, value_ptr(v));
-}
-
-void SetUniformFloat(const std::string& name, float f)
-{
-	auto loc = glGetUniformLocation(program, name.c_str());
-	if (loc == -1)
-	{
-		std::cout << "uniform not found " << name << std::endl;
-		return;
-	}
-
-	glUniform1f(loc, f);
-}
-
-GLuint vertBuffer;
-GLuint indexBuffer;
-
-void CreateBuffers()
-{
-	float vertices [] =
-	{
-		-1.0f, -1.0f, 0.0,
-		1.0f, -1.0f, 0.0,
-		1.0f, 1.0f, 0.0,
-		-1.0f, 1.0f, 0.0
-	};
-
-	glGenBuffers(1, &vertBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
-	glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(float), vertices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
-	glEnableVertexAttribArray(0);
-
-	glDisable(GL_CULL_FACE);
-	glDisable(GL_DEPTH_TEST);
-}
-
-void DrawFullscreenQuad()
-{
-	glDrawArrays(GL_QUADS, 0, 4);
-}
-
-GLuint GBufferPositionsTexture;
-GLuint GBufferPositionsPBO;
-
-GLuint GBufferNormalsTexture;
-GLuint GBufferNormalsPBO;
-
-void CreateGBufferTextures()
-{
-	glGenTextures(1, &GBufferPositionsTexture);
-	glBindTexture(GL_TEXTURE_2D, GBufferPositionsTexture);
-
-	glGenBuffers(1, &GBufferPositionsPBO);
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, GBufferPositionsPBO);
-
-	glGenTextures(1, &GBufferNormalsTexture);
-	glBindTexture(GL_TEXTURE_2D, GBufferNormalsTexture);
-
-	glGenBuffers(1, &GBufferNormalsPBO);
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, GBufferNormalsPBO);
-}
 
 void UploadGBufferTextures()
 {
@@ -189,8 +51,8 @@ void UploadGBufferTextures()
 
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, GBufferPositionsPBO);
 	glBufferData(GL_PIXEL_UNPACK_BUFFER, RT_W * RT_H * 4 * sizeof(float), rts.GetGBuffer().positions.data(), GL_STREAM_DRAW);
-	
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, RT_W, RT_H, 0, GL_BGRA, GL_FLOAT, 0);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, RT_W, RT_H, 0, GL_RGBA, GL_FLOAT, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -201,7 +63,7 @@ void UploadGBufferTextures()
 
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, GBufferNormalsPBO);
 	glBufferData(GL_PIXEL_UNPACK_BUFFER, RT_W * RT_H * 4 * sizeof(float), rts.GetGBuffer().normals.data(), GL_STREAM_DRAW);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, RT_W, RT_H, 0, GL_BGRA, GL_FLOAT, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, RT_W, RT_H, 0, GL_RGBA, GL_FLOAT, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -233,6 +95,8 @@ int main(int argc, char* argv [])
 	glfwSwapInterval(1);
 
 	LoadProgram();
+	SSAO ssao;
+
 	glEnable(GL_TEXTURE_2D);
 	CreateBuffers();
 	CreateGBufferTextures();
@@ -244,7 +108,7 @@ int main(int argc, char* argv [])
 	double lastTime = glfwGetTime();
 	double fpsTimeAccum = 0.0;
 	size_t fpsCounter = 0;
-	camera.setPosition(vec3(0, 0, -4));
+	camera.setPosition(vec3(0, 0, 4));
 
 	double lastXpos = 0.0;
 	double lastYpos = 0.0;
@@ -292,12 +156,12 @@ int main(int argc, char* argv [])
 
 		if (glfwGetKey(window, GLFW_KEY_S))
 		{
-			camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, 0, -1) * cameraSpeed);
+			camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, 0, 1) * cameraSpeed);
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_W))
 		{
-			camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, 0, 1) * cameraSpeed);
+			camera.setPosition(camera.getPosition() + camera.getOrientation() *vec3(0, 0, -1) * cameraSpeed);
 		}
 		
 		if (glfwGetKey(window, GLFW_KEY_Q))
@@ -322,17 +186,22 @@ int main(int argc, char* argv [])
 
 		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2))
 		{
-			camera.setYaw(camera.getYaw() + -deltay * 0.001);
-			camera.setPitch(camera.getPitch() + deltax * 0.001);
+			camera.setYaw(camera.getYaw() + deltay * 0.001);
+			camera.setPitch(camera.getPitch() - deltax * 0.001);
 		}
 
-		SetUniformFloat("time", glfwGetTime());
+		//SetUniformFloat("time", glfwGetTime());
 		SetUniformVec3("cameraPosition", camera.getPosition());
+		SetUniformMat4("viewProjection", camera.getViewProjectionMatrix());
+		SetUniformMat4("view", camera.getViewMatrix());
+		SetUniformMat3("invTranspView3x3", inverse(transpose(mat3(camera.getViewMatrix()))));
 		//SetUniformFloat("fbWidth", width);
 		//SetUniformFloat("fbHeight", height);
 
 		rts.UpdateCamera(&camera);
+
 		UploadGBufferTextures();
+		ssao.BindNoiseTexture();
 		DrawFullscreenQuad();
 		glfwSwapBuffers(window);
 		glfwPollEvents();

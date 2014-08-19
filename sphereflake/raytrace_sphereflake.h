@@ -1,7 +1,7 @@
 #ifndef __RAYTRACE_SPHEREFLAKE_H
 #define __RAYTRACE_SPHEREFLAKE_H
 
-#define MAX_DEPTH 32
+#define MAX_DEPTH 3
 
 struct GBuffer
 {
@@ -21,7 +21,7 @@ class RaytraceSphereflake
 		m_GBuffer.positions.resize(width * height);
 		m_GBuffer.normals.resize(width * height);
 
-		Precomputem_ChildTransforms();
+		PrecomputeChildTransforms();
 	}
 
 	~RaytraceSphereflake() 
@@ -43,7 +43,7 @@ class RaytraceSphereflake
 
 		for (auto i = 0u; i < threadCount; i++)
 		{
-			m_Threads.push_back(std::make_unique<std::thread>(std::bind(&RaytraceSphereflake::DoImagePartSSE, this)));
+			m_Threads.push_back(std::make_unique<std::thread>(std::bind(&RaytraceSphereflake::DoImagePart, this)));
 		}
 	}
 
@@ -61,7 +61,7 @@ class RaytraceSphereflake
 	}
 
 	private:
-	void DoImagePartSSE()
+	void DoImagePart()
 	{
 		std::mt19937 mt;
 		mt.seed(time(NULL));
@@ -104,7 +104,7 @@ class RaytraceSphereflake
 			Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
 			__m128 minT = _mm_set1_ps(std::numeric_limits<float>::max());
 
-			auto result = RenderSphereFlakeSSE(m_RayOrigin, rayDirection, transform, 3.f, 0, minT, position, normal);
+			auto result = RenderSphereflake(m_RayOrigin, rayDirection, transform, 3.f, 0, minT, position, normal);
 
 			for (auto q = 0u; q < 4; q++)
 			{
@@ -123,56 +123,61 @@ class RaytraceSphereflake
 		}
 	}
 
-	void Precomputem_ChildTransforms()
+	void PrecomputeChildTransforms()
 	{
 		for (auto i = 0u; i < 6; i++)
 		{
-			float s = radians((float)i * 60.0f);
-			float t = radians(90.0f);
-			const auto& coss = cosf(s);
-			const auto& sins = sinf(s);
-			const auto& cost = cosf(t);
-			const auto& sint = sinf(t);
+			float longitude = radians(90.f);
+			float latitude = radians(60.0f * (float)i);
+			const auto& coss = cosf(latitude);
+			const auto& sins = sinf(latitude);
+			const auto& cost = cosf(longitude);
+			const auto& sint = sinf(longitude);
 
-			Eigen::Vector4f displacement(coss * sint, sins * sint, cost, 0.0f);
-			displacement.normalize();
+			vec3 displacement(coss * sint, sins * sint, cost);
+			displacement = normalize(displacement);
 
-			auto transform = createRotation(Eigen::Vector4f(90.0f, (90 + i * 60) % 360, 0.0f, 0.0f));
+			auto transform = CreateRotationMatrix(vec3(90, 90 + i * 60, 0));
 			transform(0, 3) = displacement[0];
 			transform(1, 3) = displacement[1];
 			transform(2, 3) = displacement[2];
-			m_ChildTransforms.push_back(transform);
+			m_ChildTransforms[i] = transform;
 		}
+
+		vec3 rotations[3];
+		rotations[0] = vec3(0, 0, 0);
+		rotations[1] = vec3(0, 0, 0);
+		rotations[2] = vec3(60, 0, 0);
 
 		for (auto i = 0u; i < 3; i++)
 		{
-			float s = radians((float)((30 + i * 120) % 360));
-			float t = radians(30.0f);
-			const auto& coss = cosf(s);
-			const auto& sins = sinf(s);
-			const auto& cost = cosf(t);
-			const auto& sint = sinf(t);
+			float longitude = radians(60.0f);
+			float latitude = radians(30.0f + 120.0f * (float) i);
+			const auto& coss = cosf(latitude);
+			const auto& sins = sinf(latitude);
+			const auto& cost = cosf(longitude);
+			const auto& sint = sinf(longitude);
 
-			Eigen::Vector4f displacement(coss * sint, sins * sint, cost, 0.0f);
-			displacement.normalize();
+			vec3 displacement(coss * sint, sins * sint, cost);
+			displacement = normalize(displacement);
 
-			auto transform = createRotation(Eigen::Vector4f(0.0, 360.0f - i * 60.0f, 270.0f, 0.0f));
+			auto transform = CreateRotationMatrix(rotations[i]);
 			transform(0, 3) = displacement[0];
 			transform(1, 3) = displacement[1];
 			transform(2, 3) = displacement[2];
-			m_ChildTransforms.push_back(transform);
+			m_ChildTransforms[6 + i] = transform;
 		}
 	}
 
-	Eigen::Matrix4f createRotation(Eigen::Vector4f rot)
+	Eigen::Matrix4f CreateRotationMatrix(const vec3& rot)
 	{
-		float sinx = sinf(rot[0]);
-		float siny = sinf(rot[1]);
-		float sinz = sinf(rot[2]);
+		float sinx = sinf(radians(rot[0]));
+		float siny = sinf(radians(rot[1]));
+		float sinz = sinf(radians(rot[2]));
 
-		float cosx = cosf(rot[0]);
-		float cosy = cosf(rot[1]);
-		float cosz = cosf(rot[2]);
+		float cosx = cosf(radians(rot[0]));
+		float cosy = cosf(radians(rot[1]));
+		float cosz = cosf(radians(rot[2]));
 
 		Eigen::Matrix4f result = Eigen::Matrix4f::Identity();
 		result(0, 0) = cosy * cosz;
@@ -189,7 +194,12 @@ class RaytraceSphereflake
 		return result;
 	}
 
-	__m128 RenderSphereFlakeSSE
+	const __m128 oneThird = _mm_set1_ps(1.0 / 3.0);
+	const __m128 two = _mm_set1_ps(2.0);
+	const __m128 hundred = _mm_set1_ps(100.0f);
+	const __m128 zero = _mm_set1_ps(0.0f);
+
+	inline __m128 RenderSphereflake
 	(
 		const Vec3Packet& rayOrigin,
 		const Vec3Packet& rayDirection,
@@ -201,11 +211,6 @@ class RaytraceSphereflake
 		Vec3Packet& normal
 	)
 	{
-		static const __m128 oneThird = _mm_set1_ps(1.0 / 3.0);
-		static const __m128 two = _mm_set1_ps(2.0);
-		static const __m128 hundred = _mm_set1_ps(100.0f);
-		static const __m128 zero = _mm_set1_ps(0.0f);
-
 		if (depth >= MAX_DEPTH)
 		{
 			return zero;
@@ -230,7 +235,9 @@ class RaytraceSphereflake
 		}
 
 		auto depthResult = _mm_cmplt_ps(_mm_sqrt_ps(_mm_div_ps(t, radius)), hundred);
-		if (_mm_movemask_ps(depthResult) == 0)
+		auto tLessThanZeroResult = _mm_cmplt_ps(t, zero);
+
+		if (_mm_movemask_ps(_mm_or_ps(depthResult, tLessThanZeroResult)) == 0)
 		{
 			return result;
 		}
@@ -249,7 +256,7 @@ class RaytraceSphereflake
 			transform(2, 3) *= translationScale;
 			auto worldTransform = parentTransform * transform;
 
-			RenderSphereFlakeSSE(rayOrigin, rayDirection, worldTransform, radiusScalar, depth + 1, minT, position, normal);
+			RenderSphereflake(rayOrigin, rayDirection, worldTransform, radiusScalar, depth + 1, minT, position, normal);
 		}
 
 		result = RaySphereIntersectionSSE(rayOrigin, rayDirection, sphereOriginPacket, radiusSq, t);
@@ -291,7 +298,7 @@ class RaytraceSphereflake
 	size_t m_Height;
 	GBuffer m_GBuffer;
 
-	std::vector<Eigen::Matrix4f> m_ChildTransforms;
+	Eigen::Matrix4f m_ChildTransforms[9];
 	std::vector<std::unique_ptr<std::thread>> m_Threads;
 
 	bool m_Deinitialize = false;

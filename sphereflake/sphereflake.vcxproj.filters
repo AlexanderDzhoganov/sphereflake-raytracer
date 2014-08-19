@@ -26,6 +26,9 @@
     <None Include="vertex.glsl">
       <Filter>Header Files</Filter>
     </None>
+    <None Include="ssao.glsl">
+      <Filter>Header Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="glcorearb.h">
@@ -41,6 +44,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SIMD.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SSAO.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GL.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

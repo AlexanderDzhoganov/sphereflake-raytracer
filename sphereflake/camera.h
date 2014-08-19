@@ -4,23 +4,41 @@
 class Camera
 {
 
-	public:
+public:
+	mat4 getViewMatrix() const
+	{
+		mat4 translate = mat4(1.0);
+		translate[3] = vec4(m_Position, 1.0);
+		mat4 rotate = glm::toMat4(getOrientation());
+		return inverse(translate * rotate);
+	}
+
+	mat4 getProjectionMatrix() const
+	{
+		return glm::perspective(radians(m_Fov), m_AspectRatio, 0.01f, 100.0f);
+	}
+
+	mat4 getViewProjectionMatrix() const
+	{
+		return getViewMatrix() * getProjectionMatrix();
+	}
+
 	vec3 getTopLeft() const
 	{
 		auto d = getScaling();
-		return m_Position + getOrientation() * vec3(-m_AspectRatio * d, d, 1.0f);
+		return m_Position + getOrientation() * vec3(-m_AspectRatio * d, d, -1.0f);
 	}
 
 	vec3 getTopRight() const
 	{
 		auto d = getScaling();
-		return m_Position + getOrientation() * vec3(m_AspectRatio * d, d, 1.0f);
+		return m_Position + getOrientation() * vec3(m_AspectRatio * d, d, -1.0f);
 	}
 
 	vec3 getBottomLeft() const
 	{
 		auto d = getScaling();
-		return m_Position + getOrientation() * vec3(-m_AspectRatio * d, -d, 1.0f);
+		return m_Position + getOrientation() * vec3(-m_AspectRatio * d, -d, -1.0f);
 	}
 
 	const vec3& getPosition() const
@@ -95,7 +113,7 @@ class Camera
 	}
 
 	vec3 m_Position;
-	float m_Fov = 75.0f;
+	float m_Fov = 60.0f;
 	float m_AspectRatio = 16.0f / 9.0f;
 	float m_Roll = 0.0;
 	float m_Pitch = 0.0;
