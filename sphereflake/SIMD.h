@@ -119,6 +119,14 @@ __forceinline void Normalize(Vec3Packet& a)
 }
 
 static const __m128 sseZero = _mm_set1_ps(0.0f);
+static const __m128 sseMinusOne = _mm_set1_ps(-1.0f);
+
+__forceinline __m128 RayPlaneIntersectionSSE(const Vec3Packet& rayOrigin, const Vec3Packet& rayDirection, const Vec3Packet& planeNormal, __m128& t)
+{
+	t = _mm_div_ps(_mm_mul_ps(Dot(rayOrigin, planeNormal), sseMinusOne), Dot(rayDirection, planeNormal));
+	auto result = _mm_cmpge_ps(t, sseZero);
+	return result;
+}
 
 __forceinline __m128 RaySphereIntersectionSSE(const Vec3Packet& rayOrigin, const Vec3Packet& rayDirection, const Vec3Packet& sphereOrigin, __m128 sphereRadiusSq, __m128& t)
 {
