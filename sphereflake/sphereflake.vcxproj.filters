@@ -9,40 +9,22 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{9fe5fc5e-24b3-4624-ad46-c727e1b31f3c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="sphereflake.glsl">
-      <Filter>Header Files</Filter>
-    </None>
     <None Include="vertex.glsl">
-      <Filter>Header Files</Filter>
+      <Filter>Shaders</Filter>
     </None>
     <None Include="ssao.glsl">
-      <Filter>Header Files</Filter>
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="sphereflake.glsl">
+      <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="glcorearb.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="camera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="raytrace_sphereflake.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="kd_sphereflake.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SIMD.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -52,5 +34,16 @@
     <ClInclude Include="GL.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Sphereflake.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Sphereflake.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
