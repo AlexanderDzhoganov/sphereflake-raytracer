@@ -38,6 +38,7 @@ using namespace glm;
 #define WND_WIDTH 1280
 #define WND_HEIGHT 720
 
+#include "sobol.h"
 #include "GL.h"
 #include "SIMD.h"
 #include "Camera.h"

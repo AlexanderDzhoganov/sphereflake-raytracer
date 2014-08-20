@@ -111,7 +111,7 @@ namespace SphereflakeRaytracer
 		float m_Roll = 0.0;
 		float m_Pitch = 0.0;
 		float m_Yaw = 0.0;
-		float m_Zoom = 0.1;
+		float m_Zoom = 0.1f;
 
 	};
 

@@ -141,6 +141,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Sobol.cpp" />
     <ClCompile Include="Sphereflake.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -151,6 +152,7 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="GL.h" />
+    <ClInclude Include="Sobol.h" />
     <ClInclude Include="Sphereflake.h" />
     <ClInclude Include="SIMD.h" />
     <ClInclude Include="SSAO.h" />

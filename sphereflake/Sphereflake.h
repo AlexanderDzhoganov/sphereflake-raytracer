@@ -68,12 +68,9 @@ namespace SphereflakeRaytracer
 		{
 			std::mt19937 mt;
 			mt.seed((unsigned long)time(NULL));
-
-			std::uniform_int_distribution<size_t> widthRand(0, m_Width - 2);
-			std::uniform_int_distribution<size_t> heightRand(0, m_Height - 2);
-
-			std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
+			std::uniform_int_distribution<unsigned long long> rnd(0);
+			std::uniform_int_distribution<unsigned int> rnd2(0);
+			
 			auto width = _mm_set1_ps((float)m_Width);
 			auto height = _mm_set1_ps((float)m_Height);
 
@@ -81,16 +78,18 @@ namespace SphereflakeRaytracer
 			SSE::Vec3Packet normal;
 			mat4 transform = mat4(1.0f);
 
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
 			for (;;)
 			{
-				auto x0 = widthRand(mt);
-				auto y0 = heightRand(mt);
+				auto x0 = floorf(Sobol::Sample(rnd(mt), 0, rnd2(mt)) * (m_Width - 1));
+				auto y0 = floorf(Sobol::Sample(rnd(mt), 1, rnd2(mt)) * (m_Height - 1));
 
-				size_t xa[4] = { x0, x0 + 1, x0, x0 + 1 };
-				size_t ya[4] = { y0, y0, y0 + 1, y0 + 1 };
+				float xa[4] = { x0, x0 + 1, x0, x0 + 1 };
+				float ya[4] = { y0, y0, y0 + 1, y0 + 1 };
 
-				auto x = _mm_set_ps((float)xa[3], (float)xa[2], (float)xa[1], (float)xa[0]);
-				auto y = _mm_set_ps((float)ya[3], (float)ya[2], (float)ya[1], (float)ya[0]);
+				auto x = _mm_set_ps(xa[3], xa[2], xa[1], xa[0]);
+				auto y = _mm_set_ps(ya[3], ya[2], ya[1], ya[0]);
 
 				auto uvx = _mm_div_ps(x, width);
 				auto uvy = _mm_div_ps(y, height);
@@ -111,7 +110,7 @@ namespace SphereflakeRaytracer
 
 				for (auto q = 0u; q < 4; q++)
 				{
-					auto idx = xa[q] + ya[q] * m_Width;
+					auto idx = (size_t)xa[q] + (size_t)ya[q] * m_Width;
 					m_GBuffer.positions[idx] = vec4(position.Extract(q), 1.0f);
 					m_GBuffer.normals[idx] = vec4(normal.Extract(q), 1.0f);
 					raysPerSecond++;
