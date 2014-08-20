@@ -178,9 +178,9 @@ int main(int argc, char* argv [])
 
 		//SetUniformFloat("time", glfwGetTime());
 		SetUniformVec3("cameraPosition", camera.GetPosition());
-		SetUniformMat4("viewProjection", camera.GetViewProjectionMatrix());
-		SetUniformMat4("view", camera.GetViewMatrix());
-		SetUniformMat3("invTranspView3x3", inverse(transpose(mat3(camera.GetViewMatrix()))));
+		//SetUniformMat4("viewProjection", camera.GetViewProjectionMatrix());
+		//SetUniformMat4("view", camera.GetViewMatrix());
+		//SetUniformMat3("invTranspView3x3", inverse(transpose(mat3(camera.GetViewMatrix()))));
 		//SetUniformFloat("fbWidth", width);
 		//SetUniformFloat("fbHeight", height);
 

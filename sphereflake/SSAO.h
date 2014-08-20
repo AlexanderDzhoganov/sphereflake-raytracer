@@ -37,14 +37,14 @@ namespace SphereflakeRaytracer
 			for (auto i = 0; i < KERNEL_SIZE; i++)
 			{
 				m_Kernel[i] = dist01(mtengine) * normalize
-					(
+				(
 					vec3
 					(
-					distNeg11(mtengine),
-					distNeg11(mtengine),
-					dist01(mtengine)
+						distNeg11(mtengine),
+						distNeg11(mtengine),
+						dist01(mtengine)
 					)
-					);
+				);
 
 				auto scale = (float)i / (float)KERNEL_SIZE;
 				scale = 0.1f + 0.9f * scale * scale;
@@ -62,14 +62,15 @@ namespace SphereflakeRaytracer
 			for (auto i = 0; i < NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE; i++)
 			{
 				noiseMap[i] = normalize
-					(
+				(
 					vec4
 					(
-					distNeg11(mtengine),
-					distNeg11(mtengine),
-					0.0f, 0.0f
+						distNeg11(mtengine),
+						distNeg11(mtengine),
+						distNeg11(mtengine),
+						distNeg11(mtengine)
 					)
-					);
+				);
 			}
 
 			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
@@ -86,7 +87,7 @@ namespace SphereflakeRaytracer
 
 		void SetUniforms()
 		{
-			SetUniformVec3Array("rotationKernel[0]", m_Kernel);
+		//	SetUniformVec3Array("rotationKernel[0]", m_Kernel);
 		}
 
 		std::vector<vec3> m_Kernel;

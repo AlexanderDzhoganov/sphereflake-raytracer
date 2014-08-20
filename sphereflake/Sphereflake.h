@@ -1,7 +1,7 @@
 #ifndef __RAYTRACE_SPHEREFLAKE_H
 #define __RAYTRACE_SPHEREFLAKE_H
 
-#define SPHEREFLAKE_MAX_DEPTH 2
+#define SPHEREFLAKE_MAX_DEPTH 16
 
 namespace SphereflakeRaytracer
 {
@@ -68,8 +68,7 @@ namespace SphereflakeRaytracer
 		{
 			std::mt19937 mt;
 			mt.seed((unsigned long)time(NULL));
-			std::uniform_int_distribution<unsigned long long> rnd(0);
-			std::uniform_int_distribution<unsigned int> rnd2(0);
+			std::uniform_int_distribution<unsigned int> rnd(0);
 			
 			auto width = _mm_set1_ps((float)m_Width);
 			auto height = _mm_set1_ps((float)m_Height);
@@ -79,11 +78,13 @@ namespace SphereflakeRaytracer
 			mat4 transform = mat4(1.0f);
 
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			unsigned long long sobolCounter = 0;
 
 			for (;;)
 			{
-				auto x0 = floorf(Sobol::Sample(rnd(mt), 0, rnd2(mt)) * (m_Width - 1));
-				auto y0 = floorf(Sobol::Sample(rnd(mt), 1, rnd2(mt)) * (m_Height - 1));
+				auto x0 = floorf(Sobol::Sample(sobolCounter, 0, rnd(mt)) * (m_Width - 1));
+				auto y0 = floorf(Sobol::Sample(sobolCounter, 1, rnd(mt)) * (m_Height - 1));
+				sobolCounter++;
 
 				float xa[4] = { x0, x0 + 1, x0, x0 + 1 };
 				float ya[4] = { y0, y0, y0 + 1, y0 + 1 };
@@ -249,9 +250,9 @@ namespace SphereflakeRaytracer
 
 			minT = _mm_or_ps(_mm_andnot_ps(result, minT), _mm_and_ps(result, t));
 
-			// calculate resulting position and normal
-			auto selfPosition = rayOrigin + (rayDirection * t);
-			auto selfNormal = selfPosition - sphereOriginPacket;
+			// calculate resulting view-space position and normal
+			auto selfPosition = rayDirection * t;
+			auto selfNormal = selfPosition - sphereOriginPacket + rayOrigin;
 			SSE::Normalize(selfNormal);
 
 			// mask results
