@@ -99,6 +99,16 @@ namespace SphereflakeRaytracer
 			m_FOV = fov;
 		}
 
+		float GetZoom() const
+		{
+			return m_Zoom;
+		}
+
+		void SetZoom(float zoom)
+		{
+			m_Zoom = zoom;
+		}
+
 		private:
 		float GetScaling() const
 		{
@@ -111,7 +121,7 @@ namespace SphereflakeRaytracer
 		float m_Roll = 0.0;
 		float m_Pitch = 0.0;
 		float m_Yaw = 0.0;
-		float m_Zoom = 0.1f;
+		float m_Zoom = 0.0f;
 
 	};
 

@@ -1,7 +1,7 @@
 #ifndef __RAYTRACE_SPHEREFLAKE_H
 #define __RAYTRACE_SPHEREFLAKE_H
 
-#define SPHEREFLAKE_MAX_DEPTH 16
+#define SPHEREFLAKE_MAX_DEPTH 128
 
 namespace SphereflakeRaytracer
 {
@@ -18,6 +18,7 @@ namespace SphereflakeRaytracer
 		public:
 		int maxDepthReached = 0;
 		long long raysPerSecond = 0;
+		float closestSphereDistance = 0.0f;
 
 		Sphereflake(size_t width, size_t height) : m_Width(width), m_Height(height)
 		{
@@ -125,8 +126,14 @@ namespace SphereflakeRaytracer
 
 				auto uvx = _mm256_div_ps(x, width);
 				auto uvy = _mm256_div_ps(y, height);
-				  
-				__m256 minT = _mm256_set1_ps(std::numeric_limits<float>::max());
+				
+				union
+				{
+					__m256 minT;
+					float minTArray[8];
+				};
+
+				minT = _mm256_set1_ps(std::numeric_limits<float>::max());
 
 #endif
 
@@ -151,6 +158,7 @@ namespace SphereflakeRaytracer
 				size_t loopCount = 8;
 
 #endif
+				raysPerSecond += loopCount;
 
 				for (auto q = 0u; q < loopCount; q++)
 				{
@@ -162,7 +170,11 @@ namespace SphereflakeRaytracer
 
 					m_GBuffer.positions[idx] = vec4(position.Extract(q), 1.0f);
 					m_GBuffer.normals[idx] = vec4(normal.Extract(q), 1.0f);
-					raysPerSecond++;
+
+					if (minTArray[q] < closestSphereDistance)
+					{
+						closestSphereDistance = minTArray[q];
+					}
 				}
 
 				if (m_Deinitialize)

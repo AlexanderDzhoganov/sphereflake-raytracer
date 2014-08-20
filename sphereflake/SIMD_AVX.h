@@ -50,31 +50,27 @@ namespace SphereflakeRaytracer
 
 		};
 
-		// 4x4 matrix multiplication SSE code taken from http://fhtr.blogspot.com/2010/02/4x4-float-matrix-multiplication-using.html
-		void MatrixMultiplySSE(const float * a, const float * b, float * r)
+		// 4x4 matrix multiplication code adapted from http://fhtr.blogspot.com/2010/02/4x4-float-matrix-multiplication-using.html
+		__forceinline Matrix4 operator*(const Matrix4& a, const Matrix4& b)
 		{
+			Matrix4 result;
 			__m128 a_line, b_line, r_line;
 
 			for (int i = 0; i<16; i += 4)
 			{
-				a_line = _mm_load_ps(a);
-				b_line = _mm_set1_ps(b[i]);
+				a_line = _mm_load_ps((float*)&(a.m));
+				b_line = _mm_set1_ps(((float*)&(b.m))[i]);
 				r_line = _mm_mul_ps(a_line, b_line);
 
 				for (int j = 1; j<4; j++)
 				{
-					a_line = _mm_load_ps(&a[j * 4]);
-					b_line = _mm_set1_ps(b[i + j]);
+					a_line = _mm_load_ps(&(((float*)a.m)[j * 4]));
+					b_line = _mm_set1_ps(((float*)&b)[i + j]);
 					r_line = _mm_add_ps(_mm_mul_ps(a_line, b_line), r_line);
 				}
-				_mm_store_ps(&r[i], r_line);
+				_mm_store_ps(&(((float*)&result.m)[i]), r_line);
 			}
-		}
 
-		__forceinline Matrix4 operator*(const Matrix4& a, const Matrix4& b)
-		{
-			Matrix4 result;
-			MatrixMultiplySSE((float*) &a.m, (float*) &b.m, (float*) &result.m);
 			return result;
 		}
 
