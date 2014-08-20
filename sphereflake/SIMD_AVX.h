@@ -49,42 +49,32 @@ namespace SphereflakeRaytracer
 			}
 
 		};
-		
-		Matrix4 matmult_ref(const Matrix4 &A, const Matrix4 &B)
-		{
-			Matrix4 t; // write to temp
-			for (int i = 0; i < 4; i++)
-			for (int j = 0; j < 4; j++)
-				t.m[i][j] = A.m[i][0] * B.m[0][j] + A.m[i][1] * B.m[1][j] + A.m[i][2] * B.m[2][j] + A.m[i][3] * B.m[3][j];
 
-			return t;
-		}
-
-		// 4x4 matrix multiplication SSE code taken from https://gist.github.com/rygorous/4172889
-		__forceinline __m128 LinearCombination(const __m128& a, const Matrix4& b)
+		// 4x4 matrix multiplication SSE code taken from http://fhtr.blogspot.com/2010/02/4x4-float-matrix-multiplication-using.html
+		void MatrixMultiplySSE(const float * a, const float * b, float * r)
 		{
-			__m128 result;
-			result = _mm_mul_ps(_mm_shuffle_ps(a, a, 0x00), b.rows[0]);
-			result = _mm_add_ps(result, _mm_mul_ps(_mm_shuffle_ps(a, a, 0x55), b.rows[1]));
-			result = _mm_add_ps(result, _mm_mul_ps(_mm_shuffle_ps(a, a, 0xaa), b.rows[2]));
-			result = _mm_add_ps(result, _mm_mul_ps(_mm_shuffle_ps(a, a, 0xff), b.rows[3]));
-			return result;
+			__m128 a_line, b_line, r_line;
+
+			for (int i = 0; i<16; i += 4)
+			{
+				a_line = _mm_load_ps(a);
+				b_line = _mm_set1_ps(b[i]);
+				r_line = _mm_mul_ps(a_line, b_line);
+
+				for (int j = 1; j<4; j++)
+				{
+					a_line = _mm_load_ps(&a[j * 4]);
+					b_line = _mm_set1_ps(b[i + j]);
+					r_line = _mm_add_ps(_mm_mul_ps(a_line, b_line), r_line);
+				}
+				_mm_store_ps(&r[i], r_line);
+			}
 		}
 
 		__forceinline Matrix4 operator*(const Matrix4& a, const Matrix4& b)
 		{
-			return matmult_ref(a, b);
-
-			__m128 out0x = LinearCombination(a.rows[0], b);
-			__m128 out1x = LinearCombination(a.rows[1], b);
-			__m128 out2x = LinearCombination(a.rows[2], b);
-			__m128 out3x = LinearCombination(a.rows[3], b);
-
 			Matrix4 result;
-			result.rows[0] = out0x;
-			result.rows[1] = out1x;
-			result.rows[2] = out2x;
-			result.rows[3] = out3x;
+			MatrixMultiplySSE((float*) &a.m, (float*) &b.m, (float*) &result.m);
 			return result;
 		}
 
