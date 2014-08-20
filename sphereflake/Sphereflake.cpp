@@ -155,7 +155,7 @@ namespace SphereflakeRaytracer
 			position.Set(vec3(0.0f));
 			normal.Set(vec3(0.0f));
 
-			RenderSphereflake(m_RayOrigin, rayDirection, transform, 3.f, 0, minT, position, normal);
+			RenderSphereflake(m_RayOrigin, rayDirection, transform, 1.5f, 0, minT, position, normal);
 
 #ifdef __ARCH_NO_AVX
 

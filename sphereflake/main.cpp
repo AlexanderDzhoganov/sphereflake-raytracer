@@ -109,6 +109,8 @@ int main(int argc, char* argv [])
 	rts.SetView(camera.GetPosition(), camera.GetTopLeft(), camera.GetTopRight(), camera.GetBottomLeft());
 	rts.Initialize();
 
+	float ssaoFactor = 1.0f;
+
 	while (!glfwWindowShouldClose(window))
 	{
 		double time = glfwGetTime();
@@ -140,34 +142,59 @@ int main(int argc, char* argv [])
 
 		float cameraSpeed = 0.7f * (float)dt * min(rts.closestSphereDistance, 6.0f);
 
+		bool moving = false;
+
 		if (glfwGetKey(window, GLFW_KEY_D))
 		{
 			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() * vec3(1, 0, 0) * cameraSpeed);
+			moving = true;
 		}
-		
+
 		if (glfwGetKey(window, GLFW_KEY_A))
 		{
 			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() *vec3(-1, 0, 0) * cameraSpeed);
+			moving = true;
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_S))
 		{
 			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() *vec3(0, 0, 1) * cameraSpeed);
+			moving = true;
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_W))
 		{
 			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() *vec3(0, 0, -1) * cameraSpeed);
+			moving = true;
 		}
 		
 		if (glfwGetKey(window, GLFW_KEY_Q))
 		{
 			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() *vec3(0, 1, 0) * cameraSpeed);
+			moving = true;
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_E))
 		{
 			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() *vec3(0, -1, 0) * cameraSpeed);
+			moving = true;
+		}
+
+		if (moving)
+		{
+			ssaoFactor -= dt;
+			if (ssaoFactor <= 0.5f)
+			{
+				ssaoFactor = 0.5f;
+			}
+		}
+		else
+		{
+			ssaoFactor += dt;
+			if (ssaoFactor >= 1.0f)
+			{
+				ssaoFactor = 1.0f;
+			}
 		}
 
 		double xpos;
@@ -188,6 +215,7 @@ int main(int argc, char* argv [])
 
 		//SetUniformFloat("time", glfwGetTime());
 		SetUniformVec3("cameraPosition", camera.GetPosition());
+		SetUniformFloat("ssaoFactor", ssaoFactor);
 		//SetUniformMat4("viewProjection", camera.GetViewProjectionMatrix());
 		//SetUniformMat4("view", camera.GetViewMatrix());
 		//SetUniformMat3("invTranspView3x3", inverse(transpose(mat3(camera.GetViewMatrix()))));

@@ -5,9 +5,10 @@ layout(binding=1) uniform sampler2D normals;
 layout(binding=2) uniform sampler2D noiseTexture;
 
 uniform vec3 cameraPosition;
+uniform float ssaoFactor;
 
 const float g_sample_rad = 4.0;
-const float g_intensity = 2.0;
+const float g_intensity = 16.0;
 const float g_scale = 1.5;
 const float g_bias = 0.5;
 
@@ -40,7 +41,7 @@ void main()
 
 	vec2 rand = normalize(texture(noiseTexture, gl_FragCoord.xy / screenSize).xy * 2.0f - 1.0f);
 
-	int iterations = 4;
+	int iterations = 32;
 	for (int j = 0; j < iterations; ++j)
 	{
 		vec2 coord1 = reflect(vec[j], rand) * rad;
@@ -53,7 +54,7 @@ void main()
 	}
 
 	ao /= float(iterations) * 4.0;
-	ao = 1.0 - ao;
+	ao = 1.0 - ao * ssaoFactor;
 
 	gl_FragColor = vec4((0.5 + 0.5 * (position + cameraPosition)) * ao, 1.0);
 }
