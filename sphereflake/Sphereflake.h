@@ -84,7 +84,11 @@ namespace SphereflakeRaytracer
 
 			SSE::Vec3Packet position;
 			SSE::Vec3Packet normal;
-			mat4 transform = mat4(1.0f);
+		//	mat4 transform = mat4(1.0f);
+			
+			SSE::Matrix4 transform;
+			transform.Set(mat4(1.0));
+			mat4 transform2(1.0);
 
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			unsigned long long sobolCounter = 0;
@@ -122,7 +126,7 @@ namespace SphereflakeRaytracer
 
 				auto uvx = _mm256_div_ps(x, width);
 				auto uvy = _mm256_div_ps(y, height);
-
+				  
 				__m256 minT = _mm256_set1_ps(std::numeric_limits<float>::max());
 
 #endif
@@ -137,7 +141,7 @@ namespace SphereflakeRaytracer
 				position.Set(vec3(0.0f));
 				normal.Set(vec3(0.0f));
 
-				RenderSphereflake(m_RayOrigin, rayDirection, transform, 3.f, 0, minT, position, normal);
+				RenderSphereflake(m_RayOrigin, rayDirection, transform, transform2, 3.f, 0, minT, position, normal);
 
 #ifdef __ARCH_SSE
 
@@ -152,6 +156,11 @@ namespace SphereflakeRaytracer
 				for (auto q = 0u; q < loopCount; q++)
 				{
 					auto idx = (size_t)xa[q] + (size_t)ya[q] * m_Width;
+					if (idx > m_GBuffer.positions.size())
+					{
+						continue;
+					}
+
 					m_GBuffer.positions[idx] = vec4(position.Extract(q), 1.0f);
 					m_GBuffer.normals[idx] = vec4(normal.Extract(q), 1.0f);
 					raysPerSecond++;
@@ -190,7 +199,9 @@ namespace SphereflakeRaytracer
 				transform[3][0] = displacement[0];
 				transform[3][1] = displacement[1];
 				transform[3][2] = displacement[2];
+
 				m_ChildTransforms[i] = transform;
+				m_ChildTransformsSSE[i].Set(transform);
 			}
 
 			vec3 rotations[3];
@@ -210,6 +221,7 @@ namespace SphereflakeRaytracer
 				transform[3][1] = displacement[1];
 				transform[3][2] = displacement[2];
 				m_ChildTransforms[6 + i] = transform;
+				m_ChildTransformsSSE[6 + i].Set(transform);
 			}
 		}
 
@@ -233,7 +245,8 @@ namespace SphereflakeRaytracer
 		(
 			const SSE::Vec3Packet& rayOrigin,
 			const SSE::Vec3Packet& rayDirection,
-			const mat4& parentTransform,
+			const SSE::Matrix4& parentTransform,
+			const mat4& parentTransform2,
 			float parentRadius,
 			int depth,
 			__m256& minT,
@@ -269,10 +282,11 @@ namespace SphereflakeRaytracer
 
 #endif
 
-			const vec3& sphereOrigin = vec3(parentTransform[3]);
+			vec4 sphereOrigin = parentTransform2[3];
+			vec4 sphereOrigin2 = parentTransform.Extract(3);
 
 			SSE::Vec3Packet sphereOriginPacket;
-			sphereOriginPacket.Set(sphereOrigin);
+			sphereOriginPacket.Set(vec3(sphereOrigin2));
 
 			auto result = RaySphereIntersection(rayOrigin, rayDirection, sphereOriginPacket, doubleRadiusSq, t);
 
@@ -319,14 +333,25 @@ namespace SphereflakeRaytracer
 
 			for (auto i = 0; i < 9; i++)
 			{
-				auto transform = m_ChildTransforms[i];
-				float translationScale = (4.0f / 3.0f) * radiusScalar;
-				transform[3][0] *= translationScale;
-				transform[3][1] *= translationScale;
-				transform[3][2] *= translationScale;
-				auto worldTransform = parentTransform * transform;
+				_mm_prefetch((const char*)m_ChildTransformsSSE[i].m, _MM_HINT_T0);
 
-				RenderSphereflake(rayOrigin, rayDirection, worldTransform, radiusScalar, depth + 1, minT, position, normal);
+				float scale = (4.0f / 3.0f) * radiusScalar;
+				__m128 translationScale = _mm_set_ps(1.0f, scale, scale, scale);
+				auto transform = m_ChildTransformsSSE[i];
+
+				transform.rows[3] = _mm_mul_ps(transform.rows[3], translationScale);
+
+				auto worldTransform = parentTransform * transform;
+				
+				auto oldTransform = m_ChildTransforms[i];
+				oldTransform[3][0] *= scale;
+				oldTransform[3][1] *= scale;
+				oldTransform[3][2] *= scale;
+
+				auto worldTransform2 = parentTransform2 * oldTransform;
+
+
+				RenderSphereflake(rayOrigin, rayDirection, worldTransform, worldTransform2, radiusScalar, depth + 1, minT, position, normal);
 			}
 
 			result = RaySphereIntersection(rayOrigin, rayDirection, sphereOriginPacket, radiusSq, t);
@@ -377,6 +402,8 @@ namespace SphereflakeRaytracer
 		GBuffer m_GBuffer;
 
 		mat4 m_ChildTransforms[9];
+		SSE::Matrix4 m_ChildTransformsSSE[9];
+
 		std::vector<std::unique_ptr<std::thread>> m_Threads;
 
 		bool m_Deinitialize = false;

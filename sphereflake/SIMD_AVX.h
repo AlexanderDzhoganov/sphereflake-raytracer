@@ -21,6 +21,73 @@ namespace SphereflakeRaytracer
 
 		}
 
+		struct Matrix4
+		{
+
+			union
+			{
+				float m[4][4];
+				__m128 rows[4];
+			};
+
+			void Set(const vec4& row0, const vec4& row1, const vec4& row2, const vec4& row3)
+			{
+				rows[0] = _mm_set_ps(row0.w, row0.z, row0.y, row0.x);
+				rows[1] = _mm_set_ps(row1.w, row1.z, row1.y, row1.x);
+				rows[2] = _mm_set_ps(row2.w, row2.z, row2.y, row2.x);
+				rows[3] = _mm_set_ps(row3.w, row3.z, row3.y, row3.x);
+			}
+
+			void Set(const mat4& m)
+			{
+				Set(m[0], m[1], m[2], m[3]);
+			}
+
+			vec4 Extract(size_t row) const
+			{
+				return vec4(m[row][0], m[row][1], m[row][2], m[row][3]);
+			}
+
+		};
+		
+		Matrix4 matmult_ref(const Matrix4 &A, const Matrix4 &B)
+		{
+			Matrix4 t; // write to temp
+			for (int i = 0; i < 4; i++)
+			for (int j = 0; j < 4; j++)
+				t.m[i][j] = A.m[i][0] * B.m[0][j] + A.m[i][1] * B.m[1][j] + A.m[i][2] * B.m[2][j] + A.m[i][3] * B.m[3][j];
+
+			return t;
+		}
+
+		// 4x4 matrix multiplication SSE code taken from https://gist.github.com/rygorous/4172889
+		__forceinline __m128 LinearCombination(const __m128& a, const Matrix4& b)
+		{
+			__m128 result;
+			result = _mm_mul_ps(_mm_shuffle_ps(a, a, 0x00), b.rows[0]);
+			result = _mm_add_ps(result, _mm_mul_ps(_mm_shuffle_ps(a, a, 0x55), b.rows[1]));
+			result = _mm_add_ps(result, _mm_mul_ps(_mm_shuffle_ps(a, a, 0xaa), b.rows[2]));
+			result = _mm_add_ps(result, _mm_mul_ps(_mm_shuffle_ps(a, a, 0xff), b.rows[3]));
+			return result;
+		}
+
+		__forceinline Matrix4 operator*(const Matrix4& a, const Matrix4& b)
+		{
+			return matmult_ref(a, b);
+
+			__m128 out0x = LinearCombination(a.rows[0], b);
+			__m128 out1x = LinearCombination(a.rows[1], b);
+			__m128 out2x = LinearCombination(a.rows[2], b);
+			__m128 out3x = LinearCombination(a.rows[3], b);
+
+			Matrix4 result;
+			result.rows[0] = out0x;
+			result.rows[1] = out1x;
+			result.rows[2] = out2x;
+			result.rows[3] = out3x;
+			return result;
+		}
+
 		struct Vec3Packet
 		{
 
@@ -90,7 +157,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet operator*(const Vec3Packet& a, __m256 scalar)
+		__forceinline Vec3Packet operator*(const Vec3Packet& a, const __m256& scalar)
 		{
 			Vec3Packet result;
 			result.x = _mm256_mul_ps(a.x, scalar);
@@ -99,7 +166,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet operator/(const Vec3Packet& a, __m256 scalar)
+		__forceinline Vec3Packet operator/(const Vec3Packet& a, const __m256& scalar)
 		{
 			Vec3Packet result;
 			result.x = _mm256_div_ps(a.x, scalar);
@@ -154,7 +221,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet BitwiseAnd(__m256 a, const Vec3Packet& b)
+		__forceinline Vec3Packet BitwiseAnd(const __m256& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm256_and_ps(a, b.x);
@@ -172,7 +239,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet BitwiseAndNot(__m256 a, const Vec3Packet& b)
+		__forceinline Vec3Packet BitwiseAndNot(const __m256& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm256_andnot_ps(a, b.x);
@@ -190,7 +257,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet BitwiseOr(__m256 a, const Vec3Packet& b)
+		__forceinline Vec3Packet BitwiseOr(const __m256& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm256_or_ps(a, b.x);
@@ -199,14 +266,27 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline __m256 RayPlaneIntersection(const Vec3Packet& rayOrigin, const Vec3Packet& rayDirection, const Vec3Packet& planeNormal, __m256& t)
+		__forceinline __m256 RayPlaneIntersection
+		(
+			const Vec3Packet& rayOrigin,
+			const Vec3Packet& rayDirection,
+			const Vec3Packet& planeNormal,
+			__m256& t
+		)
 		{
 			t = _mm256_div_ps(_mm256_mul_ps(Dot(rayOrigin, planeNormal), Constants::minusOne), Dot(rayDirection, planeNormal));
 			auto result = _mm256_cmp_ps(t, Constants::zero, _CMP_GE_OQ);
 			return result;
 		}
 
-		__forceinline __m256 RaySphereIntersection(const Vec3Packet& rayOrigin, const Vec3Packet& rayDirection, const Vec3Packet& sphereOrigin, __m256 sphereRadiusSq, __m256& t)
+		__forceinline __m256 RaySphereIntersection
+		(
+			const Vec3Packet& rayOrigin,
+			const Vec3Packet& rayDirection,
+			const Vec3Packet& sphereOrigin,
+			const __m256& sphereRadiusSq,
+			__m256& t
+		)
 		{
 			Vec3Packet L = sphereOrigin - rayOrigin;
 			__m256 tca = Dot(L, rayDirection);
@@ -236,7 +316,13 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline __m256 RayBoundingSphereIntersection(const Vec3Packet& rayOrigin, const Vec3Packet& rayDirection, const Vec3Packet& sphereOrigin, __m256 sphereRadiusSq)
+		__forceinline __m256 RayBoundingSphereIntersection
+		(
+			const Vec3Packet& rayOrigin,
+			const Vec3Packet& rayDirection,
+			const Vec3Packet& sphereOrigin,
+			const __m256& sphereRadiusSq
+		)
 		{
 			Vec3Packet L = sphereOrigin - rayOrigin;
 			__m256 tca = Dot(L, rayDirection);
