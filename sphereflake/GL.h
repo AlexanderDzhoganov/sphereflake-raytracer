@@ -25,7 +25,7 @@ namespace SphereflakeRaytracer
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		std::cout << "OpenGL " << glGetString(GL_VERSION) << std::endl;
 
-		glfwSwapInterval(1); // vsync
+		glfwSwapInterval(1); // sync @ 60hz
 		return window;
 	}
 

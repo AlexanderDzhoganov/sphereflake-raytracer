@@ -4,8 +4,9 @@
 namespace SphereflakeRaytracer
 {
 
-	namespace SSE
+	namespace SIMD
 	{
+		using VecType = __m256;
 
 		namespace Constants
 		{
@@ -17,8 +18,61 @@ namespace SphereflakeRaytracer
 			const __m128 one = _mm_set1_ps(1.0f);
 			const __m128 two = _mm_set1_ps(2.0f);
 			const __m128 three = _mm_set1_ps(3.0f);
-			const __m128 hundred = _mm_set1_ps(100.0f);
+			const __m128 sixty = _mm_set1_ps(60.0f);
 
+		}
+
+		struct Matrix4
+		{
+
+			union
+			{
+				float m[4][4];
+				__m128 rows[4];
+			};
+
+			void Set(const vec4& row0, const vec4& row1, const vec4& row2, const vec4& row3)
+			{
+				rows[0] = _mm_set_ps(row0.w, row0.z, row0.y, row0.x);
+				rows[1] = _mm_set_ps(row1.w, row1.z, row1.y, row1.x);
+				rows[2] = _mm_set_ps(row2.w, row2.z, row2.y, row2.x);
+				rows[3] = _mm_set_ps(row3.w, row3.z, row3.y, row3.x);
+			}
+
+			void Set(const mat4& m)
+			{
+				Set(m[0], m[1], m[2], m[3]);
+			}
+
+			vec4 Extract(size_t row) const
+			{
+				return vec4(m[row][0], m[row][1], m[row][2], m[row][3]);
+			}
+
+		};
+
+		// 4x4 matrix multiplication code adapted from http://fhtr.blogspot.com/2010/02/4x4-float-matrix-multiplication-using.html
+		__forceinline Matrix4 operator*(const Matrix4& a, const Matrix4& b)
+		{
+			Matrix4 result;
+			__m128 a_line, b_line, r_line;
+
+			for (int i = 0; i<16; i += 4)
+			{
+				a_line = _mm_load_ps((float*) &(a.m));
+				b_line = _mm_set1_ps(((float*) &(b.m))[i]);
+				r_line = _mm_mul_ps(a_line, b_line);
+
+				for (int j = 1; j<4; j++)
+				{
+					a_line = _mm_load_ps(&(((float*) a.m)[j * 4]));
+					b_line = _mm_set1_ps(((float*) &b)[i + j]);
+					r_line = _mm_add_ps(_mm_mul_ps(a_line, b_line), r_line);
+				}
+				_mm_store_ps(&(((float*) &result.m)[i]), r_line);
+			}
+
+			return result;
 		}
 
 		struct Vec3Packet
@@ -141,7 +195,7 @@ namespace SphereflakeRaytracer
 			a.z = _mm_mul_ps(a.z, x2);
 		}
 
-		__forceinline Vec3Packet BitwiseAnd(const Vec3Packet& a, const Vec3Packet& b)
+		__forceinline Vec3Packet And(const Vec3Packet& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm_and_ps(a.x, b.x);
@@ -150,7 +204,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet BitwiseAnd(__m128 a, const Vec3Packet& b)
+		__forceinline Vec3Packet And(__m128 a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm_and_ps(a, b.x);
@@ -159,7 +213,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet BitwiseAndNot(const Vec3Packet& a, const Vec3Packet& b)
+		__forceinline Vec3Packet AndNot(const Vec3Packet& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm_andnot_ps(a.x, b.x);
@@ -168,7 +222,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet BitwiseAndNot(__m128 a, const Vec3Packet& b)
+		__forceinline Vec3Packet AndNot(__m128 a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm_andnot_ps(a, b.x);
@@ -177,7 +231,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet BitwiseOr(const Vec3Packet& a, const Vec3Packet& b)
+		__forceinline Vec3Packet Or(const Vec3Packet& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm_or_ps(a.x, b.x);
@@ -186,7 +240,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet BitwiseOr(__m128 a, const Vec3Packet& b)
+		__forceinline Vec3Packet Or(__m128 a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm_or_ps(a, b.x);

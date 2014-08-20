@@ -4,8 +4,10 @@
 namespace SphereflakeRaytracer
 {
 
-	namespace SSE
+	namespace SIMD
 	{
+		
+		using VecType = __m256;
 
 		namespace Constants
 		{
@@ -163,42 +165,24 @@ namespace SphereflakeRaytracer
 
 		__forceinline __m256 Dot(const Vec3Packet& a, const Vec3Packet& b)
 		{
-			auto x2 = _mm256_mul_ps(a.x, b.x);
-			auto y2 = _mm256_mul_ps(a.y, b.y);
-			auto z2 = _mm256_mul_ps(a.z, b.z);
-			return _mm256_add_ps(_mm256_add_ps(x2, y2), z2);
-		}
-
-		__forceinline __m256 Length2(const Vec3Packet& a)
-		{
-			auto temp = _mm256_mul_ps(a.x, a.x);
-			auto y2 = _mm256_mul_ps(a.y, a.y);
-			auto z2 = _mm256_mul_ps(a.z, a.z);
-
-			temp = _mm256_add_ps(temp, y2);
-			temp = _mm256_add_ps(temp, z2);
-			return temp;
+			__m256 x2 = _mm256_add_ps(_mm256_mul_ps(a.x, b.x), _mm256_mul_ps(a.y, b.y));
+			x2 = _mm256_add_ps(x2, _mm256_mul_ps(a.z, b.z));
+			return x2;
 		}
 
 		__forceinline void Normalize(Vec3Packet& a)
 		{
-			auto x2 = _mm256_mul_ps(a.x, a.x);
-			auto y2 = _mm256_mul_ps(a.y, a.y);
-			auto z2 = _mm256_mul_ps(a.z, a.z);
+			__m256 length = Dot(a, a);
+			__m256 nr = _mm256_rsqrt_ps(length);
+			__m256 muls = _mm256_mul_ps(_mm256_mul_ps(length, nr), nr);
+			length = _mm256_mul_ps(_mm256_mul_ps(Constants::oneHalf, nr), _mm256_sub_ps(Constants::three, muls));
 
-			x2 = _mm256_add_ps(x2, y2);
-			x2 = _mm256_add_ps(x2, z2);
-
-			__m256 nr = _mm256_rsqrt_ps(x2);
-			__m256 muls = _mm256_mul_ps(_mm256_mul_ps(x2, nr), nr);
-			x2 = _mm256_mul_ps(_mm256_mul_ps(Constants::oneHalf, nr), _mm256_sub_ps(Constants::three, muls));
-
-			a.x = _mm256_mul_ps(a.x, x2);
-			a.y = _mm256_mul_ps(a.y, x2);
-			a.z = _mm256_mul_ps(a.z, x2);
+			a.x = _mm256_mul_ps(a.x, length);
+			a.y = _mm256_mul_ps(a.y, length);
+			a.z = _mm256_mul_ps(a.z, length);
 		}
 
-		__forceinline Vec3Packet BitwiseAnd(const Vec3Packet& a, const Vec3Packet& b)
+		__forceinline Vec3Packet And(const Vec3Packet& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm256_and_ps(a.x, b.x);
@@ -207,7 +191,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet BitwiseAnd(const __m256& a, const Vec3Packet& b)
+		__forceinline Vec3Packet And(const __m256& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm256_and_ps(a, b.x);
@@ -216,7 +200,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet BitwiseAndNot(const Vec3Packet& a, const Vec3Packet& b)
+		__forceinline Vec3Packet AndNot(const Vec3Packet& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm256_andnot_ps(a.x, b.x);
@@ -225,7 +209,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet BitwiseAndNot(const __m256& a, const Vec3Packet& b)
+		__forceinline Vec3Packet AndNot(const __m256& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm256_andnot_ps(a, b.x);
@@ -234,7 +218,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet BitwiseOr(const Vec3Packet& a, const Vec3Packet& b)
+		__forceinline Vec3Packet Or(const Vec3Packet& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm256_or_ps(a.x, b.x);
@@ -243,25 +227,12 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet BitwiseOr(const __m256& a, const Vec3Packet& b)
+		__forceinline Vec3Packet Or(const __m256& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm256_or_ps(a, b.x);
 			result.y = _mm256_or_ps(a, b.y);
 			result.z = _mm256_or_ps(a, b.z);
-			return result;
-		}
-
-		__forceinline __m256 RayPlaneIntersection
-		(
-			const Vec3Packet& rayOrigin,
-			const Vec3Packet& rayDirection,
-			const Vec3Packet& planeNormal,
-			__m256& t
-		)
-		{
-			t = _mm256_div_ps(_mm256_mul_ps(Dot(rayOrigin, planeNormal), Constants::minusOne), Dot(rayDirection, planeNormal));
-			auto result = _mm256_cmp_ps(t, Constants::zero, _CMP_GE_OQ);
 			return result;
 		}
 
@@ -276,8 +247,8 @@ namespace SphereflakeRaytracer
 		{
 			Vec3Packet L = sphereOrigin - rayOrigin;
 			__m256 tca = Dot(L, rayDirection);
+			
 			auto result = _mm256_cmp_ps(tca, Constants::zero, _CMP_GE_OQ);
-
 			if (_mm256_movemask_ps(result) == 0)
 			{
 				return result;

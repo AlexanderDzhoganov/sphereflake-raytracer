@@ -1,22 +1,10 @@
 #pragma warning (push, 0)
 #pragma warning (disable: 4530) // disable warnings from code not under our control
 
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <fstream>
-#include <vector>
-#include <mutex>
-#include <atomic>
 #include <thread>
 #include <random>
 #include <memory>
 #include <mmintrin.h>
-
-#include <GL/glew.h>
-
-#define GLFW_DLL
-#include <GLFW/glfw3.h>
 
 #define GLM_FORCE_RADIANS
 #include <glm.hpp>
@@ -32,178 +20,214 @@ using namespace glm;
 
 #pragma warning (pop)
 
-#define RT_W 1280
-#define RT_H 720
-
-#define WND_WIDTH 1280
-#define WND_HEIGHT 720
-
 #include "sobol.h"
-#include "GL.h"
 
-//#define __ARCH_SSE
-
-#ifdef __ARCH_SSE
+#ifdef __ARCH_NO_AVX
 #include "SIMD_SSE.h"
 #else
 #include "SIMD_AVX.h"
 #endif
 
-#include "Camera.h"
 #include "Sphereflake.h"
-#include "SSAO.h"
+#include "Util.h"
 
-using namespace SphereflakeRaytracer;
-
-Camera camera;
-Sphereflake rts(RT_W, RT_H);
-
-void UploadGBufferTextures()
+namespace SphereflakeRaytracer
 {
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, GBufferPositionsTexture);
 
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, GBufferPositionsPBO);
-	glBufferData(GL_PIXEL_UNPACK_BUFFER, RT_W * RT_H * 4 * sizeof(float), rts.GetGBuffer().positions.data(), GL_STREAM_DRAW);
-
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, RT_W, RT_H, 0, GL_RGBA, GL_FLOAT, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, GBufferNormalsTexture);
-
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, GBufferNormalsPBO);
-	glBufferData(GL_PIXEL_UNPACK_BUFFER, RT_W * RT_H * 4 * sizeof(float), rts.GetGBuffer().normals.data(), GL_STREAM_DRAW);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, RT_W, RT_H, 0, GL_RGBA, GL_FLOAT, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-}
-
-int main(int argc, char* argv [])
-{
-	auto window = GLInitialize();
-
-	LoadProgram();
-	SSAO ssao;
-
-	glEnable(GL_TEXTURE_2D);
-	CreateBuffers();
-	CreateGBufferTextures();
-
-	int width, height;
-	glfwGetFramebufferSize(window, &width, &height);
-	glViewport(0, 0, width, height);
-
-	double lastTime = glfwGetTime();
-	double fpsTimeAccum = 0.0;
-	size_t fpsCounter = 0;
-	camera.SetPosition(vec3(0, 0, 4));
-
-	double lastXpos = 0.0;
-	double lastYpos = 0.0;
-
-	rts.UpdateCamera(&camera);
-	rts.Initialize();
-
-	while (!glfwWindowShouldClose(window))
+	Sphereflake::Sphereflake(size_t width, size_t height) : m_Width(width), m_Height(height)
 	{
-		double time = glfwGetTime();
-		double dt = time - lastTime;
-		lastTime = time;
+		m_GBuffer.positions.resize(width * height);
+		m_GBuffer.normals.resize(width * height);
 
-		fpsCounter++;
-		fpsTimeAccum += dt;
-		if (fpsTimeAccum > 1.0)
-		{
-			std::stringstream ss;
-			ss << "sphereflake fps: ";
-			ss << fpsCounter;
-			ss << " depth: ";
-			ss << rts.maxDepthReached;
-			rts.maxDepthReached = 0;
-			ss << " rays per second: ";
-			ss << rts.raysPerSecond / 1000;
-			ss << "k";
-			ss << " closest sphere: ";
-			ss << rts.closestSphereDistance;
-			rts.closestSphereDistance = std::numeric_limits<float>::max();
-			rts.raysPerSecond = 0;
-
-			glfwSetWindowTitle(window, ss.str().c_str());
-			fpsTimeAccum = 0.0;
-			fpsCounter = 0;
-		}
-
-		float cameraSpeed = 0.7f * (float)dt * min(rts.closestSphereDistance, 6.0f);
-
-		if (glfwGetKey(window, GLFW_KEY_D))
-		{
-			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() * vec3(1, 0, 0) * cameraSpeed);
-		}
-		
-		if (glfwGetKey(window, GLFW_KEY_A))
-		{
-			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() *vec3(-1, 0, 0) * cameraSpeed);
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_S))
-		{
-			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() *vec3(0, 0, 1) * cameraSpeed);
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_W))
-		{
-			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() *vec3(0, 0, -1) * cameraSpeed);
-		}
-		
-		if (glfwGetKey(window, GLFW_KEY_Q))
-		{
-			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() *vec3(0, 1, 0) * cameraSpeed);
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_E))
-		{
-			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() *vec3(0, -1, 0) * cameraSpeed);
-		}
-
-		double xpos;
-		double ypos;
-		glfwGetCursorPos(window, &xpos, &ypos);
-
-		double deltax = (xpos - lastXpos);
-		double deltay = (ypos - lastYpos);
-
-		lastXpos = xpos;
-		lastYpos = ypos;
-
-		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2))
-		{
-			camera.SetYaw(camera.GetYaw() + (float)deltay * 0.001f);
-			camera.SetPitch(camera.GetPitch() - (float)deltax * 0.001f);
-		}
-
-		//SetUniformFloat("time", glfwGetTime());
-		SetUniformVec3("cameraPosition", camera.GetPosition());
-		//SetUniformMat4("viewProjection", camera.GetViewProjectionMatrix());
-		//SetUniformMat4("view", camera.GetViewMatrix());
-		//SetUniformMat3("invTranspView3x3", inverse(transpose(mat3(camera.GetViewMatrix()))));
-		//SetUniformFloat("fbWidth", width);
-		//SetUniformFloat("fbHeight", height);
-
-		rts.UpdateCamera(&camera);
-
-		UploadGBufferTextures();
-		ssao.BindNoiseTexture();
-		DrawFullscreenQuad();
-		glfwSwapBuffers(window);
-		glfwPollEvents();
+		ComputeChildTransformations();
 	}
 
-	glfwTerminate();
-	return 0;
+	Sphereflake::~Sphereflake()
+	{
+		m_Deinitialize = true;
+
+		for (auto&& i : m_Threads)
+		{
+			i->join();
+		}
+	}
+
+	void Sphereflake::Initialize()
+	{
+		auto threadCount = std::thread::hardware_concurrency();
+		for (auto i = 0u; i < threadCount; i++)
+		{
+			m_Threads.push_back(std::make_unique<std::thread>(std::bind(&Sphereflake::DoImagePart, this)));
+		}
+	}
+
+	void Sphereflake::SetView(const vec3& origin, const vec3& topLeft, const vec3& topRight, const vec3& bottomLeft)
+	{
+		m_RayOrigin.Set(origin);
+		m_TopLeft.Set(topLeft);
+		m_TopRight.Set(topRight);
+		m_BottomLeft.Set(bottomLeft);
+	}
+
+	void Sphereflake::DoImagePart()
+	{
+		std::mt19937 mt;
+		mt.seed((unsigned long) time(NULL));
+		std::uniform_int_distribution<unsigned int> rnd(0);
+
+#ifdef __ARCH_NO_AVX
+
+		auto width = _mm_set1_ps((float) m_Width);
+		auto height = _mm_set1_ps((float) m_Height);
+
+#else
+
+		auto width = _mm256_set1_ps((float) m_Width);
+		auto height = _mm256_set1_ps((float) m_Height);
+
+#endif
+
+		SIMD::Vec3Packet position;
+		SIMD::Vec3Packet normal;
+		SIMD::Matrix4 transform;
+		transform.Set(mat4(1.0));
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		unsigned long long sobolCounter = 0;
+
+		for (;;)
+		{
+
+#ifdef __ARCH_NO_AVX
+
+			auto x0 = floorf(Sobol::Sample(sobolCounter, 0, rnd(mt)) * (m_Width - 1));
+			auto y0 = floorf(Sobol::Sample(sobolCounter, 1, rnd(mt)) * (m_Height - 1));
+			sobolCounter++;
+
+			float xa[4] = { x0, x0 + 1, x0, x0 + 1 };
+			float ya[4] = { y0, y0, y0 + 1, y0 + 1 };
+
+			auto x = _mm_set_ps(xa[3], xa[2], xa[1], xa[0]);
+			auto y = _mm_set_ps(ya[3], ya[2], ya[1], ya[0]);
+
+			auto uvx = _mm_div_ps(x, width);
+			auto uvy = _mm_div_ps(y, height);
+
+			union
+			{
+				__m128 minT;
+				float minTArray[4];
+			};
+
+			minT = _mm_set1_ps(std::numeric_limits<float>::max());
+
+#else
+			auto x0 = 1 + floorf(Sobol::Sample(sobolCounter, 0, rnd(mt)) * (m_Width - 2));
+			auto y0 = 1 + floorf(Sobol::Sample(sobolCounter, 1, rnd(mt)) * (m_Height - 2));
+			sobolCounter++;
+
+			float xa[8] = { x0, x0 + 1, x0 + 1, x0, x0, x0 + 1, x0 - 1, x0 - 1 };
+			float ya[8] = { y0, y0 + 1, y0, y0 + 1, y0 - 1, y0 - 1, y0, y0 - 1 };
+
+			auto x = _mm256_set_ps(xa[7], xa[6], xa[5], xa[4], xa[3], xa[2], xa[1], xa[0]);
+			auto y = _mm256_set_ps(ya[7], ya[6], ya[5], ya[4], ya[3], ya[2], ya[1], ya[0]);
+
+			auto uvx = _mm256_div_ps(x, width);
+			auto uvy = _mm256_div_ps(y, height);
+
+			union
+			{
+				__m256 minT;
+				float minTArray[8];
+			};
+
+			minT = _mm256_set1_ps(std::numeric_limits<float>::max());
+
+#endif
+
+			auto directionHorizontalPart = m_TopLeft + (m_TopRight - m_TopLeft) * uvx;
+			auto directionVerticalPart = (m_BottomLeft - m_TopLeft) * uvy;
+
+			auto targetDirection = directionHorizontalPart + directionVerticalPart;
+			auto rayDirection = targetDirection - m_RayOrigin;
+			Normalize(rayDirection);
+
+			position.Set(vec3(0.0f));
+			normal.Set(vec3(0.0f));
+
+			RenderSphereflake(m_RayOrigin, rayDirection, transform, 3.f, 0, minT, position, normal);
+
+#ifdef __ARCH_NO_AVX
+
+			size_t loopCount = 4;
+
+#else
+
+			size_t loopCount = 8;
+
+#endif
+			raysPerSecond += loopCount;
+
+			for (auto q = 0u; q < loopCount; q++)
+			{
+				auto idx = (size_t) xa[q] + (size_t) ya[q] * m_Width;
+				if (idx > m_GBuffer.positions.size())
+				{
+					continue;
+				}
+
+				m_GBuffer.positions[idx] = vec4(position.Extract(q), 1.0f);
+				m_GBuffer.normals[idx] = vec4(normal.Extract(q), 1.0f);
+
+				if (minTArray[q] < closestSphereDistance)
+				{
+					closestSphereDistance = minTArray[q];
+				}
+			}
+
+			if (m_Deinitialize)
+			{
+				return;
+			}
+		}
+	}
+
+	void Sphereflake::ComputeChildTransformations()
+	{
+		for (auto i = 0u; i < 6; i++)
+		{
+			float longitude = radians(90.f);
+			float latitude = radians(60.0f * (float) i);
+
+			vec3 displacement = normalize(SphericalToWorldCoodinates(longitude, latitude));
+
+			auto transform = CreateRotationMatrix(vec3(90, 90 + i * 60, 0));
+			transform[3][0] = displacement[0];
+			transform[3][1] = displacement[1];
+			transform[3][2] = displacement[2];
+
+			m_ChildTransforms[i].Set(transform);
+		}
+
+		vec3 rotations[3];
+		rotations[0] = vec3(0, 0, 0);
+		rotations[1] = vec3(0, 0, 0);
+		rotations[2] = vec3(60, 0, 0);
+
+		for (auto i = 0u; i < 3; i++)
+		{
+			float longitude = radians(60.0f);
+			float latitude = radians(30.0f + 120.0f * (float) i);
+
+			vec3 displacement = normalize(SphericalToWorldCoodinates(longitude, latitude));
+
+			auto transform = CreateRotationMatrix(rotations[i]);
+			transform[3][0] = displacement[0];
+			transform[3][1] = displacement[1];
+			transform[3][2] = displacement[2];
+
+			m_ChildTransforms[6 + i].Set(transform);
+		}
+	}
+
 }

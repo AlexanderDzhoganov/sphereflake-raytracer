@@ -9,18 +9,24 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Debug|x64 = Debug|x64
-		Release|Win32 = Release|Win32
-		Release|x64 = Release|x64
+		Optimized-AVX|Win32 = Optimized-AVX|Win32
+		Optimized-AVX|x64 = Optimized-AVX|x64
+		Optimized-SSE|Win32 = Optimized-SSE|Win32
+		Optimized-SSE|x64 = Optimized-SSE|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}.Debug|Win32.ActiveCfg = Debug|Win32
 		{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}.Debug|Win32.Build.0 = Debug|Win32
 		{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}.Debug|x64.ActiveCfg = Debug|x64
 		{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}.Debug|x64.Build.0 = Debug|x64
-		{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}.Release|Win32.ActiveCfg = Release|Win32
-		{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}.Release|Win32.Build.0 = Release|Win32
-		{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}.Release|x64.ActiveCfg = Release|x64
-		{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}.Release|x64.Build.0 = Release|x64
+		{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}.Optimized-AVX|Win32.ActiveCfg = Optimized-AVX|Win32
+		{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}.Optimized-AVX|Win32.Build.0 = Optimized-AVX|Win32
+		{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}.Optimized-AVX|x64.ActiveCfg = Optimized-AVX|x64
+		{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}.Optimized-AVX|x64.Build.0 = Optimized-AVX|x64
+		{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}.Optimized-SSE|Win32.ActiveCfg = Optimized-SIMD|Win32
+		{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}.Optimized-SSE|Win32.Build.0 = Optimized-SIMD|Win32
+		{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}.Optimized-SSE|x64.ActiveCfg = Optimized-SIMD|x64
+		{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}.Optimized-SSE|x64.Build.0 = Optimized-SIMD|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
