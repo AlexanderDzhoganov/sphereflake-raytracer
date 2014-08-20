@@ -1,125 +1,120 @@
 #ifndef __CAMERA_H
 #define __CAMERA_H
 
-class Camera
+namespace SphereflakeRaytracer
 {
 
-public:
-	mat4 getViewMatrix() const
+	class Camera
 	{
-		mat4 translate = mat4(1.0);
-		translate[3] = vec4(m_Position, 1.0);
-		mat4 rotate = glm::toMat4(getOrientation());
-		return inverse(translate * rotate);
-	}
 
-	mat4 getProjectionMatrix() const
-	{
-		return glm::perspective(radians(m_Fov), m_AspectRatio, 0.01f, 100.0f);
-	}
+		public:
+		mat4 GetViewMatrix() const
+		{
+			mat4 translate = mat4(1.0);
+			translate[3] = vec4(m_Position, 1.0);
+			mat4 rotate = glm::toMat4(GetOrientation());
+			return inverse(translate * rotate);
+		}
 
-	mat4 getViewProjectionMatrix() const
-	{
-		return getViewMatrix() * getProjectionMatrix();
-	}
+		mat4 GetProjectionMatrix() const
+		{
+			return glm::perspective(radians(m_FOV), m_Aspect, 0.01f, 100.0f);
+		}
 
-	vec3 getTopLeft() const
-	{
-		auto d = getScaling();
-		return m_Position + getOrientation() * vec3(-m_AspectRatio * d, d, -1.0f);
-	}
+		mat4 GetViewProjectionMatrix() const
+		{
+			return GetViewMatrix() * GetProjectionMatrix();
+		}
 
-	vec3 getTopRight() const
-	{
-		auto d = getScaling();
-		return m_Position + getOrientation() * vec3(m_AspectRatio * d, d, -1.0f);
-	}
+		vec3 GetTopLeft() const
+		{
+			auto d = GetScaling();
+			return m_Position + GetOrientation() * vec3(-m_Aspect * d, d, -1.0f);
+		}
 
-	vec3 getBottomLeft() const
-	{
-		auto d = getScaling();
-		return m_Position + getOrientation() * vec3(-m_AspectRatio * d, -d, -1.0f);
-	}
+		vec3 GetTopRight() const
+		{
+			auto d = GetScaling();
+			return m_Position + GetOrientation() * vec3(m_Aspect * d, d, -1.0f);
+		}
 
-	const vec3& getPosition() const
-	{
-		return m_Position;
-	}
+		vec3 GetBottomLeft() const
+		{
+			auto d = GetScaling();
+			return m_Position + GetOrientation() * vec3(-m_Aspect * d, -d, -1.0f);
+		}
 
-	void setPosition(const vec3& position)
-	{
-		m_Position = position;
-	}
+		const vec3& GetPosition() const
+		{
+			return m_Position;
+		}
 
-	quat getOrientation() const
-	{
-		return quat(vec3(m_Yaw, m_Pitch, m_Roll));
-	}
+		void SetPosition(const vec3& position)
+		{
+			m_Position = position;
+		}
 
-	float getRoll() const
-	{
-		return m_Roll;
-	}
+		quat GetOrientation() const
+		{
+			return quat(vec3(m_Yaw, m_Pitch, m_Roll));
+		}
 
-	void setRoll(float roll)
-	{
-		m_Roll = roll;
-	}
+		float GetRoll() const
+		{
+			return m_Roll;
+		}
 
-	float getPitch() const
-	{
-		return m_Pitch;
-	}
+		void SetRoll(float roll)
+		{
+			m_Roll = roll;
+		}
 
-	void setPitch(float pitch)
-	{
-		m_Pitch = pitch;
-	}
+		float GetPitch() const
+		{
+			return m_Pitch;
+		}
 
-	float getYaw() const
-	{
-		return m_Yaw;
-	}
+		void SetPitch(float pitch)
+		{
+			m_Pitch = pitch;
+		}
 
-	void setYaw(float yaw)
-	{
-		m_Yaw = yaw;
-	}
+		float GetYaw() const
+		{
+			return m_Yaw;
+		}
 
-	float getZoom() const
-	{
-		return m_Zoom;
-	}
+		void SetYaw(float yaw)
+		{
+			m_Yaw = yaw;
+		}
 
-	void setZoom(float zoom)
-	{
-		m_Zoom = zoom;
-	}
+		float GetFOV() const
+		{
+			return m_FOV;
+		}
 
-	float getFov() const
-	{
-		return m_Fov;
-	}
+		void SetFOV(float fov)
+		{
+			m_FOV = fov;
+		}
 
-	void setFov(float fov)
-	{
-		m_Fov = fov;
-	}
+		private:
+		float GetScaling() const
+		{
+			return tanf(glm::radians(m_FOV / 2.0f)) / vec3(-m_Aspect, 1.0, 0.0).length();
+		}
 
-	private:
-	float getScaling() const
-	{
-		return tanf(glm::radians(m_Fov / 2.0f)) / vec3(-m_AspectRatio, 1.0, 0.0).length();
-	}
+		vec3 m_Position;
+		float m_FOV = 60.0f;
+		float m_Aspect = 16.0f / 9.0f;
+		float m_Roll = 0.0;
+		float m_Pitch = 0.0;
+		float m_Yaw = 0.0;
+		float m_Zoom = 0.1;
 
-	vec3 m_Position;
-	float m_Fov = 60.0f;
-	float m_AspectRatio = 16.0f / 9.0f;
-	float m_Roll = 0.0;
-	float m_Pitch = 0.0;
-	float m_Yaw = 0.0;
-	float m_Zoom = 0.1;
+	};
 
-};
+}
 
 #endif // __CAMERA_H

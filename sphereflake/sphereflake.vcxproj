@@ -71,12 +71,12 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\lib\glfw-3.0.4.bin.WIN64\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\lib\glfw-3.0.4.bin.WIN64\include\;..\lib\glew-1.11.0\include\;..\lib\glm\glm\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\lib\glfw-3.0.4.bin.WIN64\lib-msvc120\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glew32mx.lib;glfw3dll.lib;glfw3.lib;opengl32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\lib\glfw-3.0.4.bin.WIN64\lib-msvc120\;..\lib\glew-1.11.0\lib\Release MX\Win32\</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -141,7 +141,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Sphereflake.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="sphereflake.glsl" />
@@ -149,11 +149,9 @@
     <None Include="vertex.glsl" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="camera.h" />
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="GL.h" />
-    <ClInclude Include="glcorearb.h" />
-    <ClInclude Include="kd_sphereflake.h" />
-    <ClInclude Include="raytrace_sphereflake.h" />
+    <ClInclude Include="Sphereflake.h" />
     <ClInclude Include="SIMD.h" />
     <ClInclude Include="SSAO.h" />
   </ItemGroup>
