@@ -32,11 +32,11 @@ using namespace glm;
 
 #pragma warning (pop)
 
-#define RT_W 1920
-#define RT_H 1080
+#define RT_W 1280
+#define RT_H 720
 
-#define WND_WIDTH 1920
-#define WND_HEIGHT 1080
+#define WND_WIDTH 1280
+#define WND_HEIGHT 720
 
 #include "sobol.h"
 #include "GL.h"
@@ -139,7 +139,7 @@ int main(int argc, char* argv [])
 			fpsCounter = 0;
 		}
 
-		float cameraSpeed = 0.7f * (float)dt * rts.closestSphereDistance;
+		float cameraSpeed = 0.7f * (float)dt * min(rts.closestSphereDistance, 6.0f);
 
 		if (glfwGetKey(window, GLFW_KEY_D))
 		{
@@ -169,18 +169,6 @@ int main(int argc, char* argv [])
 		if (glfwGetKey(window, GLFW_KEY_E))
 		{
 			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() *vec3(0, -1, 0) * cameraSpeed);
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_X))
-		{
-			float zoom = camera.GetZoom();
-			camera.SetZoom(zoom + 0.1f);
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_Z))
-		{
-			float zoom = camera.GetZoom();
-			camera.SetZoom(zoom - 0.1f);
 		}
 
 		double xpos;

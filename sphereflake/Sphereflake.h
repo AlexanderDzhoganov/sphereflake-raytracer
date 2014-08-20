@@ -323,7 +323,7 @@ namespace SphereflakeRaytracer
 				return result;
 			}
 
-			auto depthResult = _mm256_cmp_ps(_mm256_sqrt_ps(_mm256_div_ps(t, radius)), SSE::Constants::hundred, _CMP_LT_OQ);
+			auto depthResult = _mm256_cmp_ps(_mm256_sqrt_ps(_mm256_div_ps(t, radius)), SSE::Constants::sixty, _CMP_LT_OQ);
 			auto tLessThanZeroResult = _mm256_cmp_ps(t, SSE::Constants::zero, _CMP_LT_OQ);
 
 			if (_mm256_movemask_ps(_mm256_or_ps(depthResult, tLessThanZeroResult)) == 0)

@@ -17,7 +17,7 @@ namespace SphereflakeRaytracer
 			const __m256 one = _mm256_set1_ps(1.0f);
 			const __m256 two = _mm256_set1_ps(2.0f);
 			const __m256 three = _mm256_set1_ps(3.0f);
-			const __m256 hundred = _mm256_set1_ps(100.0f);
+			const __m256 sixty = _mm256_set1_ps(60.0f);
 
 		}
 
