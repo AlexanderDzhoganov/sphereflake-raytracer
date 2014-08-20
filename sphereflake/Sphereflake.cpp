@@ -40,7 +40,15 @@ using namespace glm;
 
 #include "sobol.h"
 #include "GL.h"
-#include "SIMD.h"
+
+//#define __ARCH_SSE
+
+#ifdef __ARCH_SSE
+#include "SIMD_SSE.h"
+#else
+#include "SIMD_AVX.h"
+#endif
+
 #include "Camera.h"
 #include "Sphereflake.h"
 #include "SSAO.h"

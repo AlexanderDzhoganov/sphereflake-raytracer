@@ -122,7 +122,7 @@
       <OmitFramePointers>true</OmitFramePointers>
       <ExceptionHandling>false</ExceptionHandling>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
-      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
       <FloatingPointExceptions>false</FloatingPointExceptions>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
@@ -152,9 +152,10 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="GL.h" />
+    <ClInclude Include="SIMD_AVX.h" />
     <ClInclude Include="Sobol.h" />
     <ClInclude Include="Sphereflake.h" />
-    <ClInclude Include="SIMD.h" />
+    <ClInclude Include="SIMD_SSE.h" />
     <ClInclude Include="SSAO.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

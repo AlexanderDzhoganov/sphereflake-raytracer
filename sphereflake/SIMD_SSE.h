@@ -39,11 +39,11 @@ namespace SphereflakeRaytracer
 				__m128 z; struct { float z0; float z1; float z2; float z3; };
 			};
 
-			void Set(const glm::vec3& v)
+			void Set(const vec3& v)
 			{
-				x = _mm_set_ps(v.x, v.x, v.x, v.x);
-				y = _mm_set_ps(v.y, v.y, v.y, v.y);
-				z = _mm_set_ps(v.z, v.z, v.z, v.z);
+				x = _mm_set1_ps(v.x);
+				y = _mm_set1_ps(v.y);
+				z = _mm_set1_ps(v.z);
 			}
 
 			void Set(const vec3& a, const vec3& b, const vec3& c, const vec3& d)

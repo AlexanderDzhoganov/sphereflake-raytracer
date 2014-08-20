@@ -70,8 +70,17 @@ namespace SphereflakeRaytracer
 			mt.seed((unsigned long)time(NULL));
 			std::uniform_int_distribution<unsigned int> rnd(0);
 			
+#ifdef __ARCH_SSE
+
 			auto width = _mm_set1_ps((float)m_Width);
 			auto height = _mm_set1_ps((float)m_Height);
+
+#else
+			
+			auto width = _mm256_set1_ps((float) m_Width);
+			auto height = _mm256_set1_ps((float) m_Height);
+			
+#endif
 
 			SSE::Vec3Packet position;
 			SSE::Vec3Packet normal;
@@ -82,10 +91,13 @@ namespace SphereflakeRaytracer
 
 			for (;;)
 			{
+			
+#ifdef __ARCH_SSE
+
 				auto x0 = floorf(Sobol::Sample(sobolCounter, 0, rnd(mt)) * (m_Width - 1));
 				auto y0 = floorf(Sobol::Sample(sobolCounter, 1, rnd(mt)) * (m_Height - 1));
 				sobolCounter++;
-
+			
 				float xa[4] = { x0, x0 + 1, x0, x0 + 1 };
 				float ya[4] = { y0, y0, y0 + 1, y0 + 1 };
 
@@ -94,6 +106,26 @@ namespace SphereflakeRaytracer
 
 				auto uvx = _mm_div_ps(x, width);
 				auto uvy = _mm_div_ps(y, height);
+
+				__m128 minT = _mm_set1_ps(std::numeric_limits<float>::max());
+
+#else
+				auto x0 = 1 + floorf(Sobol::Sample(sobolCounter, 0, rnd(mt)) * (m_Width - 2));
+				auto y0 = 1 + floorf(Sobol::Sample(sobolCounter, 1, rnd(mt)) * (m_Height - 2));
+				sobolCounter++;
+
+				float xa[8] = { x0, x0 + 1, x0 + 1, x0    , x0    , x0 + 1, x0 - 1, x0 - 1};
+				float ya[8] = { y0, y0 + 1, y0    , y0 + 1, y0 - 1, y0 - 1, y0    , y0 - 1};
+
+				auto x = _mm256_set_ps(xa[7], xa[6], xa[5], xa[4], xa[3], xa[2], xa[1], xa[0]);
+				auto y = _mm256_set_ps(ya[7], ya[6], ya[5], ya[4], ya[3], ya[2], ya[1], ya[0]);
+
+				auto uvx = _mm256_div_ps(x, width);
+				auto uvy = _mm256_div_ps(y, height);
+
+				__m256 minT = _mm256_set1_ps(std::numeric_limits<float>::max());
+
+#endif
 
 				auto directionHorizontalPart = m_TopLeft + (m_TopRight - m_TopLeft) * uvx;
 				auto directionVerticalPart = (m_BottomLeft - m_TopLeft) * uvy;
@@ -105,11 +137,19 @@ namespace SphereflakeRaytracer
 				position.Set(vec3(0.0f));
 				normal.Set(vec3(0.0f));
 
-				__m128 minT = _mm_set1_ps(std::numeric_limits<float>::max());
-
 				RenderSphereflake(m_RayOrigin, rayDirection, transform, 3.f, 0, minT, position, normal);
 
-				for (auto q = 0u; q < 4; q++)
+#ifdef __ARCH_SSE
+
+				size_t loopCount = 4;
+
+#else
+
+				size_t loopCount = 8;
+
+#endif
+
+				for (auto q = 0u; q < loopCount; q++)
 				{
 					auto idx = (size_t)xa[q] + (size_t)ya[q] * m_Width;
 					m_GBuffer.positions[idx] = vec4(position.Extract(q), 1.0f);
@@ -173,6 +213,8 @@ namespace SphereflakeRaytracer
 			}
 		}
 
+#ifdef __ARCH_SSE
+
 		inline __m128 RenderSphereflake
 		(
 			const SSE::Vec3Packet& rayOrigin,
@@ -184,6 +226,23 @@ namespace SphereflakeRaytracer
 			SSE::Vec3Packet& position,
 			SSE::Vec3Packet& normal
 		)
+
+#else
+
+		inline __m256 RenderSphereflake
+		(
+			const SSE::Vec3Packet& rayOrigin,
+			const SSE::Vec3Packet& rayDirection,
+			const mat4& parentTransform,
+			float parentRadius,
+			int depth,
+			__m256& minT,
+			SSE::Vec3Packet& position,
+			SSE::Vec3Packet& normal
+		)
+
+#endif
+
 		{
 			if (depth >= SPHEREFLAKE_MAX_DEPTH)
 			{
@@ -191,19 +250,34 @@ namespace SphereflakeRaytracer
 			}
 
 			float radiusScalar = parentRadius / 3.0f;
+
+#ifdef __ARCH_SSE
+
 			__m128 radius = _mm_set1_ps(radiusScalar);
 			__m128 radiusSq = _mm_mul_ps(radius, radius);
-
 			__m128 doubleRadiusSq = _mm_mul_ps(radius, SSE::Constants::two);
 			doubleRadiusSq = _mm_mul_ps(doubleRadiusSq, doubleRadiusSq);
+			__m128 t;
+
+#else
+
+			__m256 radius = _mm256_set1_ps(radiusScalar);
+			__m256 radiusSq = _mm256_mul_ps(radius, radius);
+			__m256 doubleRadiusSq = _mm256_mul_ps(radius, SSE::Constants::two);
+			doubleRadiusSq = _mm256_mul_ps(doubleRadiusSq, doubleRadiusSq);
+			__m256 t;
+
+#endif
 
 			const vec3& sphereOrigin = vec3(parentTransform[3]);
 
 			SSE::Vec3Packet sphereOriginPacket;
 			sphereOriginPacket.Set(sphereOrigin);
 
-			__m128 t;
 			auto result = RaySphereIntersection(rayOrigin, rayDirection, sphereOriginPacket, doubleRadiusSq, t);
+
+#ifdef __ARCH_SSE
+
 			if (_mm_movemask_ps(result) == 0)
 			{
 				// all rays miss bounding sphere
@@ -218,6 +292,25 @@ namespace SphereflakeRaytracer
 				// sphere is behind all rays or depth is too large
 				return result;
 			}
+
+#else
+
+			if (_mm256_movemask_ps(result) == 0)
+			{
+				// all rays miss bounding sphere
+				return result;
+			}
+
+			auto depthResult = _mm256_cmp_ps(_mm256_sqrt_ps(_mm256_div_ps(t, radius)), SSE::Constants::hundred, _CMP_LT_OQ);
+			auto tLessThanZeroResult = _mm256_cmp_ps(t, SSE::Constants::zero, _CMP_LT_OQ);
+
+			if (_mm256_movemask_ps(_mm256_or_ps(depthResult, tLessThanZeroResult)) == 0)
+			{
+				// sphere is behind all rays or depth is too large
+				return result;
+			}
+
+#endif
 
 			if (depth > maxDepthReached)
 			{
@@ -238,6 +331,8 @@ namespace SphereflakeRaytracer
 
 			result = RaySphereIntersection(rayOrigin, rayDirection, sphereOriginPacket, radiusSq, t);
 
+#ifdef __ARCH_SSE
+
 			// depth comparison
 			auto minTResult = _mm_cmplt_ps(t, minT);
 			result = _mm_and_ps(result, minTResult);
@@ -249,6 +344,22 @@ namespace SphereflakeRaytracer
 			}
 
 			minT = _mm_or_ps(_mm_andnot_ps(result, minT), _mm_and_ps(result, t));
+
+#else
+
+			// depth comparison
+			auto minTResult = _mm256_cmp_ps(t, minT, _CMP_LT_OQ);
+			result = _mm256_and_ps(result, minTResult);
+
+			if (_mm256_movemask_ps(result) == 0)
+			{
+				// all rays don't pass depth test
+				return result;
+			}
+
+			minT = _mm256_or_ps(_mm256_andnot_ps(result, minT), _mm256_and_ps(result, t));
+
+#endif
 
 			// calculate resulting view-space position and normal
 			auto selfPosition = rayDirection * t;
