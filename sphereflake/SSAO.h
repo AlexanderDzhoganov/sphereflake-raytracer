@@ -14,7 +14,8 @@ namespace SphereflakeRaytracer
 		{
 			GenerateNoiseTexture();
 			m_SSAOTarget = std::make_unique<GL::FramebufferObject>(width / downScale, height / downScale);
-			m_BlurTarget = std::make_unique<GL::FramebufferObject>(width, height);
+			m_BlurVerticalTarget = std::make_unique<GL::FramebufferObject>(width, height);
+			m_BlurHorizontalTarget= std::make_unique<GL::FramebufferObject>(width, height);
 
 			m_SSAOProgram = std::make_unique<GL::Program>
 			(
@@ -22,10 +23,16 @@ namespace SphereflakeRaytracer
 				Filesystem::ReadAllText("post_ssao.glsl")
 			);
 
-			m_BlurProgram = std::make_unique<GL::Program>
+			m_BlurHorizontalProgram = std::make_unique<GL::Program>
 			(
 				Filesystem::ReadAllText("post_vertex.glsl"),
-				Filesystem::ReadAllText("post_ssao_blur.glsl")
+				Filesystem::ReadAllText("post_ssao_blur_horizontal.glsl")
+			);
+
+			m_BlurVerticalProgram = std::make_unique<GL::Program>
+			(
+				Filesystem::ReadAllText("post_vertex.glsl"),
+				Filesystem::ReadAllText("post_ssao_blur_vertical.glsl")
 			);
 		}
 
@@ -36,20 +43,29 @@ namespace SphereflakeRaytracer
 			m_SSAOProgram->Use();
 			m_SSAOProgram->SetUniform("framebufferSize", vec2(m_SSAOTarget->GetWidth(), m_SSAOTarget->GetHeight()));
 			DRAW_FULLSCREEN_QUAD();
-
-			m_BlurTarget->SetActiveDraw();
+			
+			m_BlurHorizontalTarget->SetActiveDraw();
 
 			glActiveTexture(GL_TEXTURE2);
 			glBindTexture(GL_TEXTURE_2D, m_SSAOTarget->GetTexture());
 			
-			m_BlurProgram->Use();
-			m_BlurProgram->SetUniform("framebufferSize", vec2(m_BlurTarget->GetWidth(), m_BlurTarget->GetHeight()));
+			m_BlurHorizontalProgram->Use();
+			DRAW_FULLSCREEN_QUAD();
+
+			glBindTexture(GL_TEXTURE_2D, m_BlurHorizontalTarget->GetTexture());
+			
+			m_BlurVerticalProgram->Use();
 			DRAW_FULLSCREEN_QUAD();
 		}
 
 		GLuint GetSSAOTexture()
 		{
-			return m_BlurTarget->GetTexture();
+			return m_BlurVerticalTarget->GetTexture();
+		}
+
+		const std::unique_ptr<GL::FramebufferObject>& GetSSAOTarget()
+		{
+			return m_SSAOTarget;
 		}
 
 		private:
@@ -93,10 +109,12 @@ namespace SphereflakeRaytracer
 		}
 
 		std::unique_ptr<GL::FramebufferObject> m_SSAOTarget = nullptr;
-		std::unique_ptr<GL::FramebufferObject> m_BlurTarget = nullptr;
+		std::unique_ptr<GL::FramebufferObject> m_BlurVerticalTarget = nullptr;
+		std::unique_ptr<GL::FramebufferObject> m_BlurHorizontalTarget = nullptr;
 
 		std::unique_ptr<GL::Program> m_SSAOProgram = nullptr;
-		std::unique_ptr<GL::Program> m_BlurProgram = nullptr;
+		std::unique_ptr<GL::Program> m_BlurVerticalProgram = nullptr;
+		std::unique_ptr<GL::Program> m_BlurHorizontalProgram = nullptr;
 
 		std::vector<vec3> m_Kernel;
 		GLuint m_NoiseTexture;

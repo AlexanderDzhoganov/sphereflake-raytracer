@@ -40,7 +40,7 @@ void main()
 	float ao = 0.0f;
 	float rad = SSAOSampleRadius / abs(position.z);
 
-	vec2 rand = normalize(texture(noiseTexture, uv).xy * 2.0f - 1.0f);
+	vec2 rand = normalize(texture(noiseTexture, uv * 0.1).xy * 2.0f - 1.0f);
 
 	int iterations = 4;
 	for (int j = 0; j < iterations; ++j)

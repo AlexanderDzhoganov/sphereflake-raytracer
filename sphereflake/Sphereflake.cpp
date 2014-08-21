@@ -4,6 +4,7 @@
 #include <thread>
 #include <random>
 #include <memory>
+#include <iostream>
 #include <mmintrin.h>
 
 #define GLM_FORCE_RADIANS
@@ -18,6 +19,9 @@
 
 using namespace glm;
 
+#define GLFW_DLL
+#include <GLFW/glfw3.h>
+
 #pragma warning (pop)
 
 #include "Sobol.h"
@@ -30,6 +34,8 @@ using namespace glm;
 
 #include "Sphereflake.h"
 #include "Util.h"
+
+extern GLFWwindow* window;
 
 namespace SphereflakeRaytracer
 {
@@ -67,6 +73,7 @@ namespace SphereflakeRaytracer
 		m_TopLeft.Set(topLeft);
 		m_TopRight.Set(topRight);
 		m_BottomLeft.Set(bottomLeft);
+		ComputeChildTransformations();
 	}
 
 	void Sphereflake::DoImagePart()
@@ -90,7 +97,7 @@ namespace SphereflakeRaytracer
 		SIMD::Vec3Packet position;
 		SIMD::Vec3Packet normal;
 		SIMD::Matrix4 transform;
-		transform.Set(mat4(1.0));
+		transform.Set(CreateRotationMatrix(vec3(90, 0, 0)));
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		unsigned long long sobolCounter = 0;
@@ -209,10 +216,7 @@ namespace SphereflakeRaytracer
 			m_ChildTransforms[i].Set(transform);
 		}
 
-		vec3 rotations[3];
-		rotations[0] = vec3(0, 0, 0);
-		rotations[1] = vec3(0, 0, 0);
-		rotations[2] = vec3(60, 0, 0);
+		static vec3 rotations[3] = { vec3(325, 45, 15), vec3(145, 230, 165), vec3(60, 0, 0) };
 
 		for (auto i = 0u; i < 3; i++)
 		{

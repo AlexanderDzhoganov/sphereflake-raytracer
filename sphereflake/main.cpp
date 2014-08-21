@@ -61,9 +61,11 @@ using namespace SphereflakeRaytracer;
 Camera camera;
 Sphereflake rts(RT_W, RT_H);
 
+GLFWwindow* window;
+
 int main(int argc, char* argv [])
 {
-	auto window = GLInitialize();
+	window = GLInitialize();
 
 	SetupGL();
 	std::unique_ptr<SSAO> ssao = std::make_unique<SSAO>(RT_W, RT_H, 1);
@@ -104,6 +106,7 @@ int main(int argc, char* argv [])
 			ss << " depth: ";
 			ss << rts.maxDepthReached;
 			rts.maxDepthReached = 0;
+	
 			ss << " rays per second: ";
 			ss << rts.raysPerSecond / 1000;
 			ss << "k";
@@ -125,27 +128,27 @@ int main(int argc, char* argv [])
 
 		if (glfwGetKey(window, GLFW_KEY_A))
 		{
-			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() *vec3(-1, 0, 0) * cameraSpeed);
+			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() * vec3(-1, 0, 0) * cameraSpeed);
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_S))
 		{
-			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() *vec3(0, 0, 1) * cameraSpeed);
+			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() * vec3(0, 0, 1) * cameraSpeed);
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_W))
 		{
-			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() *vec3(0, 0, -1) * cameraSpeed);
+			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() * vec3(0, 0, -1) * cameraSpeed);
 		}
 		
 		if (glfwGetKey(window, GLFW_KEY_Q))
 		{
-			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() *vec3(0, 1, 0) * cameraSpeed);
+			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() * vec3(0, 1, 0) * cameraSpeed);
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_E))
 		{
-			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() *vec3(0, -1, 0) * cameraSpeed);
+			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() * vec3(0, -1, 0) * cameraSpeed);
 		}
 
 		double xpos;
@@ -187,7 +190,8 @@ int main(int argc, char* argv [])
 		program->SetUniform("framebufferSize", vec2(fbo->GetWidth(), fbo->GetHeight()));
 
 		DRAW_FULLSCREEN_QUAD();
-		fbo->BlitToDefaultFramebuffer(WND_WIDTH, WND_HEIGHT);
+	//	fbo->BlitToDefaultFramebuffer(WND_WIDTH, WND_HEIGHT);
+		ssao->GetSSAOTarget()->BlitToDefaultFramebuffer(WND_WIDTH, WND_HEIGHT);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

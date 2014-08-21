@@ -21,6 +21,6 @@ void main()
 
 	vec3 ssao = texture(SSAO, uv).xyz;
 	vec3 color = (0.5 + 0.5 * (position + cameraPosition));
-	
+
 	gl_FragColor = vec4(color * ssao, 1.0);
 }

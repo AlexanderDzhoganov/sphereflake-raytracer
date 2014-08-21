@@ -14,13 +14,19 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="vertex.glsl">
+    <None Include="post_final.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="ssao.glsl">
+    <None Include="post_ssao.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="sphereflake.glsl">
+    <None Include="post_vertex.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="post_ssao_blur_horizontal.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="post_ssao_blur_vertical.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
@@ -49,6 +55,21 @@
     <ClInclude Include="Util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Filesystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GLFramebufferObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GLPixelBufferObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GLProgram.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GLTexture2D.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Sphereflake.cpp">
@@ -58,6 +79,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GLFramebufferObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GLProgram.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

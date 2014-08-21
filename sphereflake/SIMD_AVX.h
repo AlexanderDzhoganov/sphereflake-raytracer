@@ -21,7 +21,7 @@ namespace SphereflakeRaytracer
 			ALIGN64 const __m256 one = _mm256_set1_ps(1.0f);
 			ALIGN64 const __m256 two = _mm256_set1_ps(2.0f);
 			ALIGN64 const __m256 three = _mm256_set1_ps(3.0f);
-			ALIGN64 const __m256 sixty = _mm256_set1_ps(60.0f);
+			ALIGN64 const __m256 seventy = _mm256_set1_ps(70.f);
 
 		}
 
