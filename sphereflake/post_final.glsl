@@ -6,6 +6,7 @@ layout(binding=2) uniform sampler2D SSAO;
 
 uniform vec3 cameraPosition;
 uniform vec2 framebufferSize;
+uniform float ssaoFactor;
 
 void main()
 {
@@ -19,6 +20,7 @@ void main()
 	}
 
 	vec3 ssao = texture(SSAO, uv).xyz;
-	//gl_FragColor = vec4(vec3(ssao), 1.0);
-	gl_FragColor = vec4((0.5 + 0.5 * (position + cameraPosition)) * ssao, 1.0);
+	vec3 color = (0.5 + 0.5 * (position + cameraPosition));
+	
+	gl_FragColor = vec4(color * ssao, 1.0);
 }

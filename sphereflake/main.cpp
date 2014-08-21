@@ -214,22 +214,19 @@ int main(int argc, char* argv [])
 			camera.SetPitch(camera.GetPitch() - (float)deltax * 0.001f);
 		}
 
-		program->Use();
-		program->SetUniform("cameraPosition", camera.GetPosition());
-		program->SetUniform("ssaoFactor", ssaoFactor);
-		program->SetUniform("framebufferSize", vec2(fbo->GetWidth(), fbo->GetHeight()));
-
 		rts.SetView(camera.GetPosition(), camera.GetTopLeft(), camera.GetTopRight(), camera.GetBottomLeft());
-
 		UploadGBufferTextures();
-
-		fbo->SetActiveDraw();
-		DRAW_FULLSCREEN_QUAD();
-
+		
 		ssao.Render();
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, ssao.GetSSAOTexture());
 
+		fbo->SetActiveDraw();
+		program->Use();
+		program->SetUniform("cameraPosition", camera.GetPosition());
+		program->SetUniform("ssaoFactor", ssaoFactor);
+		program->SetUniform("framebufferSize", vec2(fbo->GetWidth(), fbo->GetHeight()));
+		DRAW_FULLSCREEN_QUAD();
 		fbo->BlitToDefaultFramebuffer(WND_WIDTH, WND_HEIGHT);
 
 		glfwSwapBuffers(window);
