@@ -39,6 +39,8 @@ using namespace glm;
 
 #include "Filesystem.h"
 #include "GLProgram.h"
+#include "GLPixelBufferObject.h"
+#include "GLTexture2D.h"
 #include "GLFramebufferObject.h"
 #include "GL.h"
 
@@ -58,32 +60,6 @@ using namespace SphereflakeRaytracer;
 
 Camera camera;
 Sphereflake rts(RT_W, RT_H);
-
-void UploadGBufferTextures()
-{
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, GBufferPositionsTexture);
-
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, GBufferPositionsPBO);
-	glBufferData(GL_PIXEL_UNPACK_BUFFER, RT_W * RT_H * 4 * sizeof(float), rts.GetGBuffer().positions.data(), GL_STREAM_DRAW);
-
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, RT_W, RT_H, 0, GL_RGBA, GL_FLOAT, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, GBufferNormalsTexture);
-
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, GBufferNormalsPBO);
-	glBufferData(GL_PIXEL_UNPACK_BUFFER, RT_W * RT_H * 4 * sizeof(float), rts.GetGBuffer().normals.data(), GL_STREAM_DRAW);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, RT_W, RT_H, 0, GL_RGBA, GL_FLOAT, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-}
 
 int main(int argc, char* argv [])
 {
@@ -214,14 +190,26 @@ int main(int argc, char* argv [])
 			camera.SetPitch(camera.GetPitch() - (float)deltax * 0.001f);
 		}
 
+		// render sphereflake
 		rts.SetView(camera.GetPosition(), camera.GetTopLeft(), camera.GetTopRight(), camera.GetBottomLeft());
-		UploadGBufferTextures();
+
+		positionsPbo->BufferData(rts.GetGBuffer().positions);
+		positionsTexture->Upload(positionsPbo);
+
+		normalsPbo->BufferData(rts.GetGBuffer().normals);
+		normalsTexture->Upload(normalsPbo);
+
+		positionsTexture->Bind(0);
+		normalsTexture->Bind(1);
 		
+		// render SSAO
 		ssao->Render();
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, ssao->GetSSAOTexture());
 
+		// finalize
 		fbo->SetActiveDraw();
+
 		program->Use();
 		program->SetUniform("cameraPosition", camera.GetPosition());
 		program->SetUniform("ssaoFactor", ssaoFactor);

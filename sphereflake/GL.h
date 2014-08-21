@@ -42,25 +42,19 @@ namespace SphereflakeRaytracer
 		fbo = std::make_unique<GL::FramebufferObject>(RT_W, RT_H);
 	}
 
-	GLuint GBufferPositionsTexture;
-	GLuint GBufferPositionsPBO;
+	std::unique_ptr<GL::Texture2D> positionsTexture;
+	std::unique_ptr<GL::PixelBufferObject> positionsPbo;
 
-	GLuint GBufferNormalsTexture;
-	GLuint GBufferNormalsPBO;
+	std::unique_ptr<GL::Texture2D> normalsTexture;
+	std::unique_ptr<GL::PixelBufferObject> normalsPbo;
 
 	void CreateGBufferTextures()
 	{
-		glGenTextures(1, &GBufferPositionsTexture);
-		glBindTexture(GL_TEXTURE_2D, GBufferPositionsTexture);
+		positionsTexture = std::make_unique<GL::Texture2D>(RT_W, RT_H, GL::Texture2DFormat::RGBA_FLOAT, GL::Texture2DFilter::NEAREST, GL::Texture2DWrapMode::CLAMP_TO_EDGE);
+		normalsTexture = std::make_unique<GL::Texture2D>(RT_W, RT_H, GL::Texture2DFormat::RGBA_FLOAT, GL::Texture2DFilter::NEAREST, GL::Texture2DWrapMode::CLAMP_TO_EDGE);
 
-		glGenBuffers(1, &GBufferPositionsPBO);
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, GBufferPositionsPBO);
-
-		glGenTextures(1, &GBufferNormalsTexture);
-		glBindTexture(GL_TEXTURE_2D, GBufferNormalsTexture);
-
-		glGenBuffers(1, &GBufferNormalsPBO);
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, GBufferNormalsPBO);
+		positionsPbo = std::make_unique<GL::PixelBufferObject>();
+		normalsPbo = std::make_unique<GL::PixelBufferObject>();
 	}
 
 }

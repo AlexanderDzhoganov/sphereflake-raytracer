@@ -28,7 +28,7 @@ namespace SphereflakeRaytracer
 				glBindFramebuffer(GL_DRAW_FRAMEBUFFER, targetFBO->m_Handle);
 				
 				GLenum filter = m_Width == targetFBO->m_Width && m_Height == targetFBO->m_Height ? GL_NEAREST : GL_LINEAR;
-				glBlitFramebuffer(0, 0, (GLint)m_Width, (GLint)m_Height, 0, 0, (GLint)targetFBO->m_Width, (GLint)targetFBO->m_Height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+				glBlitFramebuffer(0, 0, (GLint)m_Width, (GLint)m_Height, 0, 0, (GLint)targetFBO->m_Width, (GLint)targetFBO->m_Height, GL_COLOR_BUFFER_BIT, filter);
 			}
 
 			void BlitToDefaultFramebuffer(size_t targetWidth, size_t targetHeight)
@@ -37,7 +37,7 @@ namespace SphereflakeRaytracer
 				glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
 				GLenum filter = m_Width == targetWidth && m_Height == targetHeight ? GL_NEAREST : GL_LINEAR;
-				glBlitFramebuffer(0, 0, (GLint)m_Width, (GLint)m_Height, 0, 0, (GLint)targetWidth, (GLint)targetHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+				glBlitFramebuffer(0, 0, (GLint)m_Width, (GLint)m_Height, 0, 0, (GLint)targetWidth, (GLint)targetHeight, GL_COLOR_BUFFER_BIT, filter);
 			}
 
 			size_t GetWidth() const
