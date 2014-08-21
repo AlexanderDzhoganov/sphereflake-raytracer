@@ -90,7 +90,7 @@ int main(int argc, char* argv [])
 	auto window = GLInitialize();
 
 	SetupGL();
-	SSAO ssao(RT_W / 2, RT_H / 2);
+	SSAO ssao(RT_W, RT_H);
 
 	glEnable(GL_TEXTURE_2D);
 	CreateGBufferTextures();

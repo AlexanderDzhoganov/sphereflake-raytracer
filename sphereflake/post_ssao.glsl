@@ -1,4 +1,4 @@
-#version 440
+#version 440 core
 
 layout(binding=0) uniform sampler2D positions;
 layout(binding=1) uniform sampler2D normals;
@@ -42,7 +42,7 @@ void main()
 
 	vec2 rand = normalize(texture(noiseTexture, uv).xy * 2.0f - 1.0f);
 
-	int iterations = 16;
+	int iterations = 4;
 	for (int j = 0; j < iterations; ++j)
 	{
 		vec2 coord1 = reflect(vec[j], rand) * rad;

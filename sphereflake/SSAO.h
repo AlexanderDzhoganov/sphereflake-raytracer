@@ -1,8 +1,7 @@
 #ifndef __SSAO_H
 #define __SSAO_H
 
-#define KERNEL_SIZE 32
-#define NOISE_TEXTURE_SIZE 512
+#define NOISE_TEXTURE_SIZE 64
 
 namespace SphereflakeRaytracer
 {

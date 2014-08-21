@@ -1,4 +1,4 @@
-#version 440
+#version 440 core
 
 layout(binding=0) uniform sampler2D positions;
 layout(binding=1) uniform sampler2D normals;
