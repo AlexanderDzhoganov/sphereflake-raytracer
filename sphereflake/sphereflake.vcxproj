@@ -221,12 +221,12 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Sobol.cpp" />
     <ClCompile Include="Sphereflake.cpp" />
+    <ClCompile Include="SSAO.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="post_final.glsl" />
     <None Include="post_ssao.glsl" />
-    <None Include="post_ssao_blur_horizontal.glsl" />
-    <None Include="post_ssao_blur_vertical.glsl" />
+    <None Include="post_ssao_blur.glsl" />
     <None Include="post_vertex.glsl" />
   </ItemGroup>
   <ItemGroup>

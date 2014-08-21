@@ -3,6 +3,8 @@
 
 #define NOISE_TEXTURE_SIZE 64
 
+extern GLFWwindow* window;
+
 namespace SphereflakeRaytracer
 {
 
@@ -23,25 +25,100 @@ namespace SphereflakeRaytracer
 				Filesystem::ReadAllText("post_ssao.glsl")
 			);
 
-			m_BlurHorizontalProgram = std::make_unique<GL::Program>
+			m_BlurProgram = std::make_unique<GL::Program>
 			(
 				Filesystem::ReadAllText("post_vertex.glsl"),
-				Filesystem::ReadAllText("post_ssao_blur_horizontal.glsl")
+				Filesystem::ReadAllText("post_ssao_blur.glsl")
 			);
+		}
 
-			m_BlurVerticalProgram = std::make_unique<GL::Program>
-			(
-				Filesystem::ReadAllText("post_vertex.glsl"),
-				Filesystem::ReadAllText("post_ssao_blur_vertical.glsl")
-			);
+		void SetSampleRadiusMultiplier(float m)
+		{
+			m_SSAOSampleRadius = 30.0f * m;
 		}
 
 		void Render()
 		{
+			if (glfwGetKey(window, GLFW_KEY_T))
+			{
+				m_SSAOSampleRadius += 0.01f;
+			}
+
+			if (glfwGetKey(window, GLFW_KEY_Y))
+			{
+				m_SSAOSampleRadius -= 0.01f;
+			}
+
+			if (glfwGetKey(window, GLFW_KEY_G))
+			{
+				m_SSAOIntensity += 0.01f;
+			}
+
+			if (glfwGetKey(window, GLFW_KEY_H))
+			{
+				m_SSAOIntensity -= 0.01f;
+			}
+
+			if (glfwGetKey(window, GLFW_KEY_B))
+			{
+				m_SSAOScale += 0.01f;
+			}
+
+			if (glfwGetKey(window, GLFW_KEY_N))
+			{
+				m_SSAOScale -= 0.01f;
+			}
+
+			if (glfwGetKey(window, GLFW_KEY_U))
+			{
+				m_SSAOBias += 0.01f;
+			}
+
+			if (glfwGetKey(window, GLFW_KEY_I))
+			{
+				m_SSAOBias -= 0.01f;
+			}
+
+			if (glfwGetKey(window, GLFW_KEY_J))
+			{
+				m_NormalThreshold += 0.01f;
+			}
+
+			if (glfwGetKey(window, GLFW_KEY_K))
+			{
+				m_NormalThreshold -= 0.01f;
+			}
+
+			if (glfwGetKey(window, GLFW_KEY_M))
+			{
+				m_DepthThreshold += 0.01f;
+			}
+
+			if (glfwGetKey(window, GLFW_KEY_LEFT_BRACKET))
+			{
+				m_DepthThreshold -= 0.01f;
+			}
+
+			if (glfwGetKey(window, GLFW_KEY_SPACE))
+			{
+				std::cout << "SSAOSampleRadius: " << m_SSAOSampleRadius << std::endl;
+				std::cout << "SSAOIntensity: " << m_SSAOIntensity << std::endl;
+				std::cout << "SSAOScale: " << m_SSAOScale << std::endl;
+				std::cout << "SSAOBias: " << m_SSAOBias << std::endl;
+				std::cout << "normalThreshold: " << m_NormalThreshold << std::endl;
+				std::cout << "depthThreshold: " << m_DepthThreshold << std::endl;
+			}
+
 			BindNoiseTexture();
 			m_SSAOTarget->SetActiveDraw();
 			m_SSAOProgram->Use();
 			m_SSAOProgram->SetUniform("framebufferSize", vec2(m_SSAOTarget->GetWidth(), m_SSAOTarget->GetHeight()));
+
+			m_SSAOProgram->SetUniform("SSAOSampleRadius", m_SSAOSampleRadius);
+			m_SSAOProgram->SetUniform("SSAOIntensity", m_SSAOIntensity);
+			m_SSAOProgram->SetUniform("SSAOScale", m_SSAOScale);
+			m_SSAOProgram->SetUniform("SSAOBias", m_SSAOBias);
+
 			DRAW_FULLSCREEN_QUAD();
 			
 			m_BlurHorizontalTarget->SetActiveDraw();
@@ -49,12 +126,22 @@ namespace SphereflakeRaytracer
 			glActiveTexture(GL_TEXTURE2);
 			glBindTexture(GL_TEXTURE_2D, m_SSAOTarget->GetTexture());
 			
-			m_BlurHorizontalProgram->Use();
+			m_BlurProgram->Use();
+			m_BlurProgram->SetUniform("normalThreshold", m_NormalThreshold);
+			m_BlurProgram->SetUniform("depthThreshold", m_DepthThreshold);
+			m_BlurProgram->SetUniform("framebufferSize", vec2(m_BlurHorizontalTarget->GetWidth(), m_BlurHorizontalTarget->GetHeight()));
+			m_BlurProgram->SetUniform("blurDirection", vec2(1.0, 0.0));
+
 			DRAW_FULLSCREEN_QUAD();
 
+			m_BlurVerticalTarget->SetActiveDraw();
 			glBindTexture(GL_TEXTURE_2D, m_BlurHorizontalTarget->GetTexture());
 			
-			m_BlurVerticalProgram->Use();
+			m_BlurProgram->SetUniform("framebufferSize", vec2(m_BlurVerticalTarget->GetWidth(), m_BlurVerticalTarget->GetHeight()));
+			m_BlurProgram->SetUniform("normalThreshold", m_NormalThreshold);
+			m_BlurProgram->SetUniform("depthThreshold", m_DepthThreshold);
+			m_BlurProgram->SetUniform("blurDirection", vec2(0.0, 1.0));
+
 			DRAW_FULLSCREEN_QUAD();
 		}
 
@@ -65,7 +152,7 @@ namespace SphereflakeRaytracer
 
 		const std::unique_ptr<GL::FramebufferObject>& GetSSAOTarget()
 		{
-			return m_SSAOTarget;
+			return m_BlurHorizontalTarget;
 		}
 
 		private:
@@ -113,11 +200,17 @@ namespace SphereflakeRaytracer
 		std::unique_ptr<GL::FramebufferObject> m_BlurHorizontalTarget = nullptr;
 
 		std::unique_ptr<GL::Program> m_SSAOProgram = nullptr;
-		std::unique_ptr<GL::Program> m_BlurVerticalProgram = nullptr;
-		std::unique_ptr<GL::Program> m_BlurHorizontalProgram = nullptr;
+		std::unique_ptr<GL::Program> m_BlurProgram = nullptr;
 
 		std::vector<vec3> m_Kernel;
 		GLuint m_NoiseTexture;
+
+		float m_SSAOSampleRadius = 30.0f;
+		float m_SSAOIntensity = 0.51f;
+		float m_SSAOScale = 3.28f;
+		float m_SSAOBias = 0.23f;
+		float m_NormalThreshold = 2.47;
+		float m_DepthThreshold = 0.01;
 
 	};
 

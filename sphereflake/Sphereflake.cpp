@@ -78,6 +78,8 @@ namespace SphereflakeRaytracer
 
 	void Sphereflake::DoImagePart()
 	{
+		std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+
 		std::mt19937 mt;
 		mt.seed((unsigned long) time(NULL));
 		std::uniform_int_distribution<unsigned int> rnd(0);
@@ -162,7 +164,7 @@ namespace SphereflakeRaytracer
 			position.Set(vec3(0.0f));
 			normal.Set(vec3(0.0f));
 
-			IntersectSphereflake(m_RayOrigin, rayDirection, transform, 1.5f, 0, minT, position, normal);
+			IntersectSphereflake(m_RayOrigin, rayDirection, transform, 3.0f, 0, minT, position, normal);
 
 #ifdef __ARCH_NO_AVX
 

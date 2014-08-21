@@ -7,18 +7,19 @@ layout(binding=2) uniform sampler2D noiseTexture;
 uniform vec3 cameraPosition;
 uniform vec2 framebufferSize;
 
-const float SSAOSampleRadius = 4.0;
-const float SSAOIntensity = 1.0;
-const float SSAOScale = 3.0;
-const float SSAOBias = 0.5;
+uniform float SSAOSampleRadius;
+uniform float SSAOIntensity;
+uniform float SSAOScale;
+uniform float SSAOBias;
+
+const vec2 kernel[4] = { vec2(1, 0), vec2(-1, 0), vec2(0, 1), vec2(0, -1) };
 
 float occlude(vec2 uv, vec3 position, vec3 normal)
 {
 	vec3 samplePosition = texture(positions, (gl_FragCoord.xy + uv) / framebufferSize.xy).xyz;
 	vec3 diff = samplePosition - position;
-	vec3 v = normalize(diff);
-	float d = length(diff) * SSAOScale;
-	return max(0.0, dot(normal, v) - SSAOBias) * (1.0 / (1.0 + d)) * SSAOIntensity;
+	float dist = length(diff);
+	return max(0.0, dot(normal, diff / dist) - SSAOBias) * (1.0 / (1.0 + sqrt(dist * SSAOScale))) * SSAOIntensity;
 }
 
 void main()
@@ -34,8 +35,6 @@ void main()
 	}
 
 	vec3 normal = texture(normals, uv).xyz;
-	
-	const vec2 vec[4] = { vec2(1, 0), vec2(-1, 0), vec2(0, 1), vec2(0, -1) };
 
 	float ao = 0.0f;
 	float rad = SSAOSampleRadius / abs(position.z);
@@ -43,14 +42,14 @@ void main()
 	vec2 rand = normalize(texture(noiseTexture, uv * 0.1).xy * 2.0f - 1.0f);
 
 	int iterations = 4;
-	for (int j = 0; j < iterations; ++j)
+	for (int i = 0; i < iterations; i++)
 	{
-		vec2 coord1 = reflect(vec[j], rand) * rad;
+		vec2 coord1 = reflect(kernel[i], rand) * rad;
 		vec2 coord2 = vec2(coord1.x * 0.707 - coord1.y * 0.707, coord1.x * 0.707 + coord1.y * 0.707);
 
 		ao += occlude(coord1 * 0.25, position, normal);
-		ao += occlude(coord2 * 0.5, position, normal);
 		ao += occlude(coord1 * 0.75, position, normal);
+		ao += occlude(coord2 * 0.5, position, normal);
 		ao += occlude(coord2, position, normal);
 	}
 

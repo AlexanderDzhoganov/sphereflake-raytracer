@@ -8,6 +8,8 @@ uniform vec3 cameraPosition;
 uniform vec2 framebufferSize;
 uniform float ssaoFactor;
 
+const vec3 lightDir = vec3(0.7, 0.7, 0.2);
+
 void main()
 {
 	vec2 uv = gl_FragCoord.xy / framebufferSize;

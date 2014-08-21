@@ -31,11 +31,11 @@ using namespace glm;
 
 #pragma warning (pop)
 
-#define RT_W 1280
-#define RT_H 720
+#define RT_W 1920
+#define RT_H 1080
 
-#define WND_WIDTH 1280
-#define WND_HEIGHT 720
+#define WND_WIDTH 1920
+#define WND_HEIGHT 1080
 
 #include "Filesystem.h"
 #include "GLProgram.h"
@@ -63,15 +63,66 @@ Sphereflake rts(RT_W, RT_H);
 
 GLFWwindow* window;
 
+GLFWwindow* GLInitialize(size_t width, size_t height)
+{
+	if (!glfwInit())
+	{
+		return nullptr;
+	}
+
+	/*	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);*/
+
+	auto window = glfwCreateWindow(width, height, "Sphereflake", nullptr, nullptr);
+	if (!window)
+	{
+		glfwTerminate();
+		return nullptr;
+	}
+
+	glfwMakeContextCurrent(window);
+	glewExperimental = GL_TRUE;
+	glewInit();
+
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	std::cout << "OpenGL " << glGetString(GL_VERSION) << std::endl;
+
+	glfwSwapInterval(1); // sync @ 60hz
+	return window;
+}
+
+std::unique_ptr<GL::Program> program = nullptr;
+
+void SetupGL()
+{
+	program = std::make_unique<GL::Program>(Filesystem::ReadAllText("post_vertex.glsl"), Filesystem::ReadAllText("post_final.glsl"));
+}
+
+std::unique_ptr<GL::Texture2D> positionsTexture;
+std::unique_ptr<GL::PixelBufferObject> positionsPbo;
+
+std::unique_ptr<GL::Texture2D> normalsTexture;
+std::unique_ptr<GL::PixelBufferObject> normalsPbo;
+
+void CreateGBufferTextures(size_t width, size_t height)
+{
+	positionsTexture = std::make_unique<GL::Texture2D>(width, height, GL::Texture2DFormat::RGBA_FLOAT, GL::Texture2DFilter::NEAREST, GL::Texture2DWrapMode::CLAMP_TO_EDGE);
+	normalsTexture = std::make_unique<GL::Texture2D>(width, height, GL::Texture2DFormat::RGBA_FLOAT, GL::Texture2DFilter::NEAREST, GL::Texture2DWrapMode::CLAMP_TO_EDGE);
+
+	positionsPbo = std::make_unique<GL::PixelBufferObject>();
+	normalsPbo = std::make_unique<GL::PixelBufferObject>();
+}
+
 int main(int argc, char* argv [])
 {
-	window = GLInitialize();
+	window = GLInitialize(WND_WIDTH, WND_HEIGHT);
 
 	SetupGL();
 	std::unique_ptr<SSAO> ssao = std::make_unique<SSAO>(RT_W, RT_H, 1);
 
 	glEnable(GL_TEXTURE_2D);
-	CreateGBufferTextures();
+	CreateGBufferTextures(RT_W, RT_H);
 
 	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);
@@ -80,7 +131,10 @@ int main(int argc, char* argv [])
 	double lastTime = glfwGetTime();
 	double fpsTimeAccum = 0.0;
 	size_t fpsCounter = 0;
-	camera.SetPosition(vec3(0, 0, 4));
+	camera.SetPosition(vec3(-5.4098f, -7.2139f, 1.19006f));
+	camera.SetPitch(-1.371f);
+	camera.SetYaw(0.921999f);
+	camera.SetRoll(0.0f);
 
 	double lastXpos = 0.0;
 	double lastYpos = 0.0;
@@ -92,6 +146,21 @@ int main(int argc, char* argv [])
 
 	while (!glfwWindowShouldClose(window))
 	{
+		if (glfwGetKey(window, GLFW_KEY_ESCAPE))
+		{
+			glfwSetWindowShouldClose(window, 1);
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_ENTER))
+		{
+			auto pos = camera.GetPosition();
+			auto pitch = camera.GetPitch();
+			auto yaw = camera.GetYaw();
+			auto roll = camera.GetRoll();
+			std::cout << pos.x << " " << pos.y << " " << pos.z << std::endl;
+			std::cout << pitch << " " << yaw << " " << roll << std::endl;
+		}
+
 		double time = glfwGetTime();
 		double dt = time - lastTime;
 		lastTime = time;
@@ -178,20 +247,24 @@ int main(int argc, char* argv [])
 		normalsTexture->Bind(1);
 		
 		// render SSAO
+		ssao->SetSampleRadiusMultiplier(rts.closestSphereDistance);
 		ssao->Render();
+
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, ssao->GetSSAOTexture());
 
 		// finalize
-		fbo->SetActiveDraw();
+		//fbo->SetActiveDraw();
+
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
 		program->Use();
 		program->SetUniform("cameraPosition", camera.GetPosition());
-		program->SetUniform("framebufferSize", vec2(fbo->GetWidth(), fbo->GetHeight()));
-
+		program->SetUniform("framebufferSize", vec2(WND_WIDTH, WND_HEIGHT));
+		
 		DRAW_FULLSCREEN_QUAD();
-	//	fbo->BlitToDefaultFramebuffer(WND_WIDTH, WND_HEIGHT);
-		ssao->GetSSAOTarget()->BlitToDefaultFramebuffer(WND_WIDTH, WND_HEIGHT);
+		//fbo->BlitToDefaultFramebuffer(WND_WIDTH, WND_HEIGHT);
+		//ssao->GetSSAOTarget()->BlitToDefaultFramebuffer(WND_WIDTH, WND_HEIGHT);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -199,7 +272,6 @@ int main(int argc, char* argv [])
 
 	ssao = nullptr;
 	program = nullptr;
-	fbo = nullptr;
 
 	glfwTerminate();
 	return 0;
