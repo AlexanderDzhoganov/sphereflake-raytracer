@@ -10,15 +10,22 @@ namespace SphereflakeRaytracer
 	{
 
 		public:
-		SSAO(size_t width, size_t height)
+		SSAO(size_t width, size_t height, int downScale)
 		{
 			GenerateNoiseTexture();
-			m_SSAOTarget = std::make_unique<GL::FramebufferObject>(width, height);
+			m_SSAOTarget = std::make_unique<GL::FramebufferObject>(width / downScale, height / downScale);
+			m_BlurTarget = std::make_unique<GL::FramebufferObject>(width, height);
 
 			m_SSAOProgram = std::make_unique<GL::Program>
 			(
 				Filesystem::ReadAllText("post_vertex.glsl"),
 				Filesystem::ReadAllText("post_ssao.glsl")
+			);
+
+			m_BlurProgram = std::make_unique<GL::Program>
+			(
+				Filesystem::ReadAllText("post_vertex.glsl"),
+				Filesystem::ReadAllText("post_ssao_blur.glsl")
 			);
 		}
 
@@ -28,13 +35,21 @@ namespace SphereflakeRaytracer
 			m_SSAOTarget->SetActiveDraw();
 			m_SSAOProgram->Use();
 			m_SSAOProgram->SetUniform("framebufferSize", vec2(m_SSAOTarget->GetWidth(), m_SSAOTarget->GetHeight()));
+			DRAW_FULLSCREEN_QUAD();
 
+			m_BlurTarget->SetActiveDraw();
+
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, m_SSAOTarget->GetTexture());
+			
+			m_BlurProgram->Use();
+			m_BlurProgram->SetUniform("framebufferSize", vec2(m_BlurTarget->GetWidth(), m_BlurTarget->GetHeight()));
 			DRAW_FULLSCREEN_QUAD();
 		}
 
 		GLuint GetSSAOTexture()
 		{
-			return m_SSAOTarget->GetTexture();
+			return m_BlurTarget->GetTexture();
 		}
 
 		private:
@@ -78,6 +93,8 @@ namespace SphereflakeRaytracer
 		}
 
 		std::unique_ptr<GL::FramebufferObject> m_SSAOTarget = nullptr;
+		std::unique_ptr<GL::FramebufferObject> m_BlurTarget = nullptr;
+
 		std::unique_ptr<GL::Program> m_SSAOProgram = nullptr;
 		std::unique_ptr<GL::Program> m_BlurProgram = nullptr;
 

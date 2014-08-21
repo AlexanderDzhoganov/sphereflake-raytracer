@@ -90,7 +90,7 @@ int main(int argc, char* argv [])
 	auto window = GLInitialize();
 
 	SetupGL();
-	SSAO ssao(RT_W, RT_H);
+	SSAO ssao(RT_W, RT_H, 1);
 
 	glEnable(GL_TEXTURE_2D);
 	CreateGBufferTextures();
@@ -226,6 +226,7 @@ int main(int argc, char* argv [])
 		program->SetUniform("cameraPosition", camera.GetPosition());
 		program->SetUniform("ssaoFactor", ssaoFactor);
 		program->SetUniform("framebufferSize", vec2(fbo->GetWidth(), fbo->GetHeight()));
+
 		DRAW_FULLSCREEN_QUAD();
 		fbo->BlitToDefaultFramebuffer(WND_WIDTH, WND_HEIGHT);
 
