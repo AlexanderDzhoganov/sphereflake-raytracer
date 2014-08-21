@@ -90,7 +90,7 @@ int main(int argc, char* argv [])
 	auto window = GLInitialize();
 
 	SetupGL();
-	SSAO ssao(RT_W, RT_H, 1);
+	std::unique_ptr<SSAO> ssao = std::make_unique<SSAO>(RT_W, RT_H, 1);
 
 	glEnable(GL_TEXTURE_2D);
 	CreateGBufferTextures();
@@ -217,9 +217,9 @@ int main(int argc, char* argv [])
 		rts.SetView(camera.GetPosition(), camera.GetTopLeft(), camera.GetTopRight(), camera.GetBottomLeft());
 		UploadGBufferTextures();
 		
-		ssao.Render();
+		ssao->Render();
 		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, ssao.GetSSAOTexture());
+		glBindTexture(GL_TEXTURE_2D, ssao->GetSSAOTexture());
 
 		fbo->SetActiveDraw();
 		program->Use();
@@ -233,6 +233,10 @@ int main(int argc, char* argv [])
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
+
+	ssao = nullptr;
+	program = nullptr;
+	fbo = nullptr;
 
 	glfwTerminate();
 	return 0;

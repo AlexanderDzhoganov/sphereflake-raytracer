@@ -14,9 +14,9 @@ void main()
 
 	vec3 color = texture(SSAO, uv).xyz;
 
-	const vec2 vec[4] = { vec2(2, 0), vec2(-2, 0), vec2(0, 2), vec2(0, -2) };
+	const vec2 vec[8] = { vec2(1, 0), vec2(-1, 0), vec2(0, 1), vec2(0, -1), vec2(1, 1), vec2(-1, -1), vec2(1, -1), vec2(-1, 1) };
 
-	const int iterations = 4;
+	const int iterations = 8;
 	for(int x = 0; x < iterations; x++)
 	{
 		color += texture(SSAO, uv + vec[x] * ps).xyz;

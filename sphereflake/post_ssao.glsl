@@ -12,7 +12,7 @@ const float SSAOIntensity = 1.0;
 const float SSAOScale = 3.0;
 const float SSAOBias = 0.5;
 
-float doAmbientOcclusion(vec2 uv, vec3 position, vec3 normal)
+float occlude(vec2 uv, vec3 position, vec3 normal)
 {
 	vec3 samplePosition = texture(positions, (gl_FragCoord.xy + uv) / framebufferSize.xy).xyz;
 	vec3 diff = samplePosition - position;
@@ -48,10 +48,10 @@ void main()
 		vec2 coord1 = reflect(vec[j], rand) * rad;
 		vec2 coord2 = vec2(coord1.x * 0.707 - coord1.y * 0.707, coord1.x * 0.707 + coord1.y * 0.707);
 
-		ao += doAmbientOcclusion(coord1 * 0.25, position, normal);
-		ao += doAmbientOcclusion(coord2 * 0.5, position, normal);
-		ao += doAmbientOcclusion(coord1 * 0.75, position, normal);
-		ao += doAmbientOcclusion(coord2, position, normal);
+		ao += occlude(coord1 * 0.25, position, normal);
+		ao += occlude(coord2 * 0.5, position, normal);
+		ao += occlude(coord1 * 0.75, position, normal);
+		ao += occlude(coord2, position, normal);
 	}
 
 	ao /= float(iterations) * 4.0;
