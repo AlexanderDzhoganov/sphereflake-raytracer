@@ -184,7 +184,6 @@ int main(int argc, char* argv [])
 
 		program->Use();
 		program->SetUniform("cameraPosition", camera.GetPosition());
-		program->SetUniform("ssaoFactor", ssaoFactor);
 		program->SetUniform("framebufferSize", vec2(fbo->GetWidth(), fbo->GetHeight()));
 
 		DRAW_FULLSCREEN_QUAD();
