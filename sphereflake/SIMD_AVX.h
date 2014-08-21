@@ -98,16 +98,9 @@ namespace SphereflakeRaytracer
 
 			void Set(const vec3& v)
 			{
-				x = _mm256_set1_ps(v.x);
-				y = _mm256_set1_ps(v.y);
-				z = _mm256_set1_ps(v.z);
-			}
-
-			void Set(const vec3& a, const vec3& b, const vec3& c, const vec3& d, const vec3& e, const vec3& f, const vec3& g, const vec3& h)
-			{
-				x = _mm256_set_ps(a.x, b.x, c.x, d.x, e.x, f.x, g.x, h.x);
-				y = _mm256_set_ps(a.y, b.y, c.y, d.y, e.y, f.y, g.y, h.y);
-				z = _mm256_set_ps(a.z, b.z, c.z, d.z, e.z, f.z, g.z, h.z);
+				x = _mm256_broadcast_ss(&(v.x));
+				y = _mm256_broadcast_ss(&(v.y));
+				z = _mm256_broadcast_ss(&(v.z));
 			}
 
 			vec3 Extract(size_t index)
@@ -240,15 +233,13 @@ namespace SphereflakeRaytracer
 
 		__forceinline __m256 RaySphereIntersection
 		(
-			const Vec3Packet& rayOrigin,
 			const Vec3Packet& rayDirection,
 			const Vec3Packet& sphereOrigin,
 			const __m256& sphereRadiusSq,
 			__m256& t
 		)
 		{
-			Vec3Packet L = sphereOrigin - rayOrigin;
-			__m256 tca = Dot(L, rayDirection);
+			__m256 tca = Dot(sphereOrigin, rayDirection);
 			
 			auto result = _mm256_cmp_ps(tca, Constants::zero, _CMP_GE_OQ);
 			if (_mm256_movemask_ps(result) == 0)
@@ -256,7 +247,7 @@ namespace SphereflakeRaytracer
 				return result;
 			}
 
-			auto d2 = _mm256_sub_ps(Dot(L, L), _mm256_mul_ps(tca, tca));
+			auto d2 = _mm256_sub_ps(Dot(sphereOrigin, sphereOrigin), _mm256_mul_ps(tca, tca));
 
 			result = _mm256_cmp_ps(d2, sphereRadiusSq, _CMP_LE_OQ);
 			if (_mm256_movemask_ps(result) == 0)
@@ -273,27 +264,6 @@ namespace SphereflakeRaytracer
 			t = _mm256_or_ps(_mm256_and_ps(tresult, t0), _mm256_andnot_ps(tresult, t1));
 
 			return result;
-		}
-
-		__forceinline __m256 RayBoundingSphereIntersection
-		(
-			const Vec3Packet& rayOrigin,
-			const Vec3Packet& rayDirection,
-			const Vec3Packet& sphereOrigin,
-			const __m256& sphereRadiusSq
-		)
-		{
-			Vec3Packet L = sphereOrigin - rayOrigin;
-			__m256 tca = Dot(L, rayDirection);
-
-			auto result = _mm256_cmp_ps(tca, Constants::zero, _CMP_GE_OQ);
-			if (_mm256_movemask_ps(result) == 0)
-			{
-				return result;
-			}
-
-			auto d2 = _mm256_sub_ps(Dot(L, L), _mm256_mul_ps(tca, tca));
-			return _mm256_cmp_ps(d2, sphereRadiusSq, _CMP_LE_OQ);
 		}
 
 	}

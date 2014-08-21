@@ -69,6 +69,7 @@ namespace SphereflakeRaytracer
 
 	void Sphereflake::SetView(const vec3& origin, const vec3& topLeft, const vec3& topRight, const vec3& bottomLeft)
 	{
+		m_RayOriginVec3 = origin;
 		m_RayOrigin.Set(origin);
 		m_TopLeft.Set(topLeft);
 		m_TopRight.Set(topRight);
@@ -99,10 +100,12 @@ namespace SphereflakeRaytracer
 		SIMD::Vec3Packet position;
 		SIMD::Vec3Packet normal;
 		SIMD::Matrix4 transform;
-		transform.Set(CreateRotationMatrix(vec3(90, 0, 0)));
+		mat4 rot = CreateRotationMatrix(vec3(90, 0, 0));
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		unsigned long long sobolCounter = 0;
+
+		float floatMax = std::numeric_limits<float>::max();
 
 		for (;;)
 		{
@@ -150,7 +153,7 @@ namespace SphereflakeRaytracer
 				float minTArray[8];
 			};
 
-			minT = _mm256_set1_ps(std::numeric_limits<float>::max());
+			minT = _mm256_broadcast_ss(&floatMax);
 
 #endif
 
@@ -161,10 +164,12 @@ namespace SphereflakeRaytracer
 			auto rayDirection = targetDirection - m_RayOrigin;
 			Normalize(rayDirection);
 
+			transform.Set(translate(-m_RayOriginVec3) * rot);
+
 			position.Set(vec3(0.0f));
 			normal.Set(vec3(0.0f));
 
-			IntersectSphereflake(m_RayOrigin, rayDirection, transform, 3.0f, 0, minT, position, normal);
+			IntersectSphereflake(rayDirection, transform, 3.0f, 0, minT, position, normal);
 
 #ifdef __ARCH_NO_AVX
 

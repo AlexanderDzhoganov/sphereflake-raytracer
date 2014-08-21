@@ -49,13 +49,13 @@ namespace SphereflakeRaytracer
 		bool m_Deinitialize = false;
 
 		SIMD::Vec3Packet m_RayOrigin;
+		vec3 m_RayOriginVec3;
 		SIMD::Vec3Packet m_TopLeft;
 		SIMD::Vec3Packet m_TopRight;
 		SIMD::Vec3Packet m_BottomLeft;
 
 		__declspec(align(64)) __m256 IntersectSphereflake
 		(
-			const SIMD::Vec3Packet& rayOrigin,
 			const SIMD::Vec3Packet& rayDirection,
 			const SIMD::Matrix4& parentTransform,
 			float parentRadius,
@@ -65,10 +65,11 @@ namespace SphereflakeRaytracer
 			SIMD::Vec3Packet& normal
 		)
 		{
-			if (depth >= MAX_DEPTH)
+			/*if (depth >= MAX_DEPTH)
 			{
 				return SIMD::Constants::zero;
-			}
+			}*/
+
 			float radiusScalar = parentRadius / 3.0f;
 
 #ifdef __ARCH_NO_AVX
@@ -81,8 +82,7 @@ namespace SphereflakeRaytracer
 
 #else
 
-			__m256 radius = _mm256_set1_ps(radiusScalar);
-			__m256 radiusSq = _mm256_mul_ps(radius, radius);
+			__m256 radius = _mm256_broadcast_ss(&radiusScalar);
 			__m256 doubleRadiusSq = _mm256_mul_ps(radius, SIMD::Constants::two);
 			doubleRadiusSq = _mm256_mul_ps(doubleRadiusSq, doubleRadiusSq);
 			__m256 t;
@@ -92,7 +92,7 @@ namespace SphereflakeRaytracer
 			SIMD::Vec3Packet sphereOrigin;
 			sphereOrigin.Set(vec3(parentTransform.Extract(3)));
 
-			auto result = RaySphereIntersection(rayOrigin, rayDirection, sphereOrigin, doubleRadiusSq, t);
+			auto result = RaySphereIntersection(rayDirection, sphereOrigin, doubleRadiusSq, t);
 
 #ifdef __ARCH_NO_AVX
 
@@ -137,19 +137,27 @@ namespace SphereflakeRaytracer
 
 			for (auto i = 0; i < 9; i++)
 			{
-				_mm_prefetch((const char*)&(m_ChildTransforms[i].m[0][0]), _MM_HINT_T0);
-				_mm_prefetch((const char*)&(parentTransform.m[0][0]), _MM_HINT_T0);
-
 				float scale = (4.0f / 3.0f) * radiusScalar;
 				__m128 translationScale = _mm_set_ps(1.0f, scale, scale, scale);
 				auto transform = m_ChildTransforms[i];
 				transform.rows[3] = _mm_mul_ps(transform.rows[3], translationScale);
 				auto worldTransform = parentTransform * transform;
 
-				IntersectSphereflake(rayOrigin, rayDirection, worldTransform, radiusScalar, depth + 1, minT, position, normal);
+				IntersectSphereflake(rayDirection, worldTransform, radiusScalar, depth + 1, minT, position, normal);
 			}
 
-			result = RaySphereIntersection(rayOrigin, rayDirection, sphereOrigin, radiusSq, t);
+#ifdef __ARCH_NO_AVX
+
+			__m128 radiusSq = _mm_mul_ps(radius, radius);
+
+#else
+			
+			__m256 radiusSq = _mm256_mul_ps(radius, radius);
+
+#endif
+
+
+			result = RaySphereIntersection(rayDirection, sphereOrigin, radiusSq, t);
 
 #ifdef __ARCH_NO_AVX
 
@@ -183,7 +191,7 @@ namespace SphereflakeRaytracer
 
 			// calculate resulting view-space position and normal
 			auto selfPosition = rayDirection * t;
-			auto selfNormal = selfPosition - sphereOrigin + rayOrigin;
+			auto selfNormal = selfPosition - sphereOrigin;
 			SIMD::Normalize(selfNormal);
 
 			// mask results

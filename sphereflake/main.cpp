@@ -31,14 +31,14 @@ using namespace glm;
 
 #pragma warning (pop)
 
-#define POSTPROCESS_WIDTH 1920
-#define POSTPROCESS_HEIGHT 1080
+#define POSTPROCESS_WIDTH 1280
+#define POSTPROCESS_HEIGHT 720
 
-#define RAYTRACE_WIDTH 1920
-#define RAYTRACE_HEIGHT 1080
+#define RAYTRACE_WIDTH 1280
+#define RAYTRACE_HEIGHT 720
 
-#define WND_WIDTH 1920
-#define WND_HEIGHT 1080
+#define WND_WIDTH 1280
+#define WND_HEIGHT 720
 
 #include "Filesystem.h"
 #include "GLProgram.h"
