@@ -20,7 +20,7 @@ using namespace glm;
 
 #pragma warning (pop)
 
-#include "sobol.h"
+#include "Sobol.h"
 
 #ifdef __ARCH_NO_AVX
 #include "SIMD_SSE.h"

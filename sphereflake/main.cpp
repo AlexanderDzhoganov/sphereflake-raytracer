@@ -37,7 +37,9 @@ using namespace glm;
 #define WND_WIDTH 1280
 #define WND_HEIGHT 720
 
-#include "sobol.h"
+#include "Filesystem.h"
+#include "GLProgram.h"
+#include "GLFramebufferObject.h"
 #include "GL.h"
 
 #ifdef __ARCH_NO_AVX
@@ -87,11 +89,10 @@ int main(int argc, char* argv [])
 {
 	auto window = GLInitialize();
 
-	LoadProgram();
-	SSAO ssao;
+	SetupGL();
+	SSAO ssao(RT_W / 2, RT_H / 2);
 
 	glEnable(GL_TEXTURE_2D);
-	CreateBuffers();
 	CreateGBufferTextures();
 
 	int width, height;
@@ -213,20 +214,22 @@ int main(int argc, char* argv [])
 			camera.SetPitch(camera.GetPitch() - (float)deltax * 0.001f);
 		}
 
-		//SetUniformFloat("time", glfwGetTime());
-		SetUniformVec3("cameraPosition", camera.GetPosition());
-		SetUniformFloat("ssaoFactor", ssaoFactor);
-		//SetUniformMat4("viewProjection", camera.GetViewProjectionMatrix());
-		//SetUniformMat4("view", camera.GetViewMatrix());
-		//SetUniformMat3("invTranspView3x3", inverse(transpose(mat3(camera.GetViewMatrix()))));
-		//SetUniformFloat("fbWidth", width);
-		//SetUniformFloat("fbHeight", height);
+		program->Use();
+		program->SetUniform("cameraPosition", camera.GetPosition());
+		program->SetUniform("ssaoFactor", ssaoFactor);
+		program->SetUniform("framebufferSize", vec2(fbo->GetWidth(), fbo->GetHeight()));
 
 		rts.SetView(camera.GetPosition(), camera.GetTopLeft(), camera.GetTopRight(), camera.GetBottomLeft());
 
 		UploadGBufferTextures();
-		ssao.BindNoiseTexture();
-		DrawFullscreenQuad();
+
+		fbo->SetActiveDraw();
+		DRAW_FULLSCREEN_QUAD();
+
+		//ssao.Render();
+
+		fbo->BlitToDefaultFramebuffer(WND_WIDTH, WND_HEIGHT);
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}

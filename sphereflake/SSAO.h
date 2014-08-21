@@ -11,47 +11,31 @@ namespace SphereflakeRaytracer
 	{
 
 		public:
-		SSAO()
+		SSAO(size_t width, size_t height)
 		{
-
-			ComputeKernel();
 			GenerateNoiseTexture();
-			SetUniforms();
+			m_SSAOTarget = std::make_unique<GL::FramebufferObject>(width, height);
+
+			m_SSAOProgram = std::make_unique<GL::Program>
+			(
+				Filesystem::ReadAllText("post_vertex.glsl"),
+				Filesystem::ReadAllText("post_ssao.glsl")
+			);
 		}
 
-		void BindNoiseTexture()
+		void Render()
 		{
-			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, m_NoiseTexture);
+			BindNoiseTexture();
+			m_SSAOTarget->SetActiveDraw();
+			m_SSAOProgram->Use();
+			m_SSAOProgram->SetUniform("framebufferSize", vec2(m_SSAOTarget->GetWidth(), m_SSAOTarget->GetHeight()));
+
+			DRAW_FULLSCREEN_QUAD();
+
+			m_SSAOTarget->BlitToDefaultFramebuffer(1280, 720);
 		}
 
 		private:
-		void ComputeKernel()
-		{
-			m_Kernel.resize(KERNEL_SIZE);
-			std::mt19937 mtengine;
-			mtengine.seed(6126126);
-			std::uniform_real_distribution<float> dist01(0, 1);
-			std::uniform_real_distribution<float> distNeg11(-1, 1);
-
-			for (auto i = 0; i < KERNEL_SIZE; i++)
-			{
-				m_Kernel[i] = dist01(mtengine) * normalize
-				(
-					vec3
-					(
-						distNeg11(mtengine),
-						distNeg11(mtengine),
-						dist01(mtengine)
-					)
-				);
-
-				auto scale = (float)i / (float)KERNEL_SIZE;
-				scale = 0.1f + 0.9f * scale * scale;
-				m_Kernel[i] *= scale;
-			}
-		}
-
 		void GenerateNoiseTexture()
 		{
 			std::vector<vec4> noiseMap(NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE);
@@ -85,10 +69,15 @@ namespace SphereflakeRaytracer
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		}
 
-		void SetUniforms()
+		void BindNoiseTexture()
 		{
-		//	SetUniformVec3Array("rotationKernel[0]", m_Kernel);
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, m_NoiseTexture);
 		}
+
+		std::unique_ptr<GL::FramebufferObject> m_SSAOTarget = nullptr;
+		std::unique_ptr<GL::Program> m_SSAOProgram = nullptr;
+		std::unique_ptr<GL::Program> m_BlurProgram = nullptr;
 
 		std::vector<vec3> m_Kernel;
 		GLuint m_NoiseTexture;

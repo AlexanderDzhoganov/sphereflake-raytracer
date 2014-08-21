@@ -216,18 +216,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="GLFramebufferObject.cpp" />
+    <ClCompile Include="GLProgram.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Sobol.cpp" />
     <ClCompile Include="Sphereflake.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="sphereflake.glsl" />
-    <None Include="ssao.glsl" />
-    <None Include="vertex.glsl" />
+    <None Include="post_final.glsl" />
+    <None Include="post_ssao.glsl" />
+    <None Include="post_vertex.glsl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Filesystem.h" />
     <ClInclude Include="GL.h" />
+    <ClInclude Include="GLFramebufferObject.h" />
+    <ClInclude Include="GLProgram.h" />
     <ClInclude Include="SIMD_AVX.h" />
     <ClInclude Include="Sobol.h" />
     <ClInclude Include="Sphereflake.h" />
