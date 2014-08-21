@@ -51,7 +51,7 @@ namespace SphereflakeRaytracer
 		SIMD::Vec3Packet m_TopRight;
 		SIMD::Vec3Packet m_BottomLeft;
 
-		__declspec(align(64)) __m256 RenderSphereflake
+		__declspec(align(64)) __m256 IntersectSphereflake
 		(
 			const SIMD::Vec3Packet& rayOrigin,
 			const SIMD::Vec3Packet& rayDirection,
@@ -140,7 +140,7 @@ namespace SphereflakeRaytracer
 				transform.rows[3] = _mm_mul_ps(transform.rows[3], translationScale);
 				auto worldTransform = parentTransform * transform;
 
-				RenderSphereflake(rayOrigin, rayDirection, worldTransform, radiusScalar, depth + 1, minT, position, normal);
+				IntersectSphereflake(rayOrigin, rayDirection, worldTransform, radiusScalar, depth + 1, minT, position, normal);
 			}
 
 			result = RaySphereIntersection(rayOrigin, rayDirection, sphereOrigin, radiusSq, t);

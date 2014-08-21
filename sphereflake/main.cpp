@@ -140,7 +140,7 @@ int main(int argc, char* argv [])
 			fpsCounter = 0;
 		}
 
-		float cameraSpeed = 0.7f * (float)dt * min(rts.closestSphereDistance, 6.0f);
+		float cameraSpeed = 0.2f * (float)dt * min(rts.closestSphereDistance, 6.0f);
 
 		bool moving = false;
 

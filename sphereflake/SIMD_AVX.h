@@ -1,6 +1,8 @@
 #ifndef __SIMD_H
 #define __SIMD_H
 
+#define ALIGN64 __declspec(align(64))
+
 namespace SphereflakeRaytracer
 {
 
@@ -12,21 +14,21 @@ namespace SphereflakeRaytracer
 		namespace Constants
 		{
 
-			const __m256 minusOne = _mm256_set1_ps(-1.0f);
-			const __m256 zero = _mm256_set1_ps(0.0f);
-			const __m256 oneThird = _mm256_set1_ps(1.0f / 3.0f);
-			const __m256 oneHalf = _mm256_set1_ps(1.0f / 2.0f);
-			const __m256 one = _mm256_set1_ps(1.0f);
-			const __m256 two = _mm256_set1_ps(2.0f);
-			const __m256 three = _mm256_set1_ps(3.0f);
-			const __m256 sixty = _mm256_set1_ps(60.0f);
+			ALIGN64 const __m256 minusOne = _mm256_set1_ps(-1.0f);
+			ALIGN64 const __m256 zero = _mm256_set1_ps(0.0f);
+			ALIGN64 const __m256 oneThird = _mm256_set1_ps(1.0f / 3.0f);
+			ALIGN64 const __m256 oneHalf = _mm256_set1_ps(1.0f / 2.0f);
+			ALIGN64 const __m256 one = _mm256_set1_ps(1.0f);
+			ALIGN64 const __m256 two = _mm256_set1_ps(2.0f);
+			ALIGN64 const __m256 three = _mm256_set1_ps(3.0f);
+			ALIGN64 const __m256 sixty = _mm256_set1_ps(60.0f);
 
 		}
 
 		struct Matrix4
 		{
 
-			union
+			ALIGN64 union
 			{
 				float m[4][4];
 				__m128 rows[4];
@@ -79,17 +81,17 @@ namespace SphereflakeRaytracer
 		struct Vec3Packet
 		{
 
-			union
+			ALIGN64 union
 			{
 				__m256 x; struct { float x0; float x1; float x2; float x3; float x4; float x5; float x6; float x7; };
 			};
 
-			union
+			ALIGN64 union
 			{
 				__m256 y; struct { float y0; float y1; float y2; float y3; float y4; float y5; float y6; float y7; };
 			};
 
-			union
+			ALIGN64 union
 			{
 				__m256 z; struct { float z0; float z1; float z2; float z3; float z4; float z5; float z6; float z7; };
 			};
