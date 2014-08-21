@@ -226,7 +226,9 @@ int main(int argc, char* argv [])
 		fbo->SetActiveDraw();
 		DRAW_FULLSCREEN_QUAD();
 
-		//ssao.Render();
+		ssao.Render();
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, ssao.GetSSAOTexture());
 
 		fbo->BlitToDefaultFramebuffer(WND_WIDTH, WND_HEIGHT);
 

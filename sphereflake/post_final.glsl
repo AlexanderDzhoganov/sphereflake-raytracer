@@ -18,5 +18,7 @@ void main()
 		return;
 	}
 
-	gl_FragColor = vec4((0.5 + 0.5 * (position + cameraPosition)), 1.0);
+	vec3 ssao = texture(SSAO, uv).xyz;
+
+	gl_FragColor = vec4((0.5 + 0.5 * (position + cameraPosition)) * ssao, 1.0);
 }

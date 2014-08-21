@@ -31,8 +31,11 @@ namespace SphereflakeRaytracer
 			m_SSAOProgram->SetUniform("framebufferSize", vec2(m_SSAOTarget->GetWidth(), m_SSAOTarget->GetHeight()));
 
 			DRAW_FULLSCREEN_QUAD();
+		}
 
-			m_SSAOTarget->BlitToDefaultFramebuffer(1280, 720);
+		GLuint GetSSAOTexture()
+		{
+			return m_SSAOTarget->GetTexture();
 		}
 
 		private:
