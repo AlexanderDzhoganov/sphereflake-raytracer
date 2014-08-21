@@ -224,6 +224,7 @@
     <ClCompile Include="SSAO.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="post_blit.glsl" />
     <None Include="post_final.glsl" />
     <None Include="post_ssao.glsl" />
     <None Include="post_ssao_blur.glsl" />

@@ -31,8 +31,11 @@ using namespace glm;
 
 #pragma warning (pop)
 
-#define RT_W 1920
-#define RT_H 1080
+#define POSTPROCESS_WIDTH 1920
+#define POSTPROCESS_HEIGHT 1080
+
+#define RAYTRACE_WIDTH 1920
+#define RAYTRACE_HEIGHT 1080
 
 #define WND_WIDTH 1920
 #define WND_HEIGHT 1080
@@ -59,7 +62,7 @@ using namespace glm;
 using namespace SphereflakeRaytracer;
 
 Camera camera;
-Sphereflake rts(RT_W, RT_H);
+Sphereflake rts(RAYTRACE_WIDTH, RAYTRACE_HEIGHT);
 
 GLFWwindow* window;
 
@@ -70,9 +73,9 @@ GLFWwindow* GLInitialize(size_t width, size_t height)
 		return nullptr;
 	}
 
-	/*	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);*/
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
 	auto window = glfwCreateWindow(width, height, "Sphereflake", nullptr, nullptr);
 	if (!window)
@@ -119,10 +122,10 @@ int main(int argc, char* argv [])
 	window = GLInitialize(WND_WIDTH, WND_HEIGHT);
 
 	SetupGL();
-	std::unique_ptr<SSAO> ssao = std::make_unique<SSAO>(RT_W, RT_H, 1);
+	std::unique_ptr<SSAO> ssao = std::make_unique<SSAO>(POSTPROCESS_WIDTH, POSTPROCESS_HEIGHT, 1);
 
 	glEnable(GL_TEXTURE_2D);
-	CreateGBufferTextures(RT_W, RT_H);
+	CreateGBufferTextures(POSTPROCESS_WIDTH, POSTPROCESS_HEIGHT);
 
 	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);
@@ -254,8 +257,6 @@ int main(int argc, char* argv [])
 		glBindTexture(GL_TEXTURE_2D, ssao->GetSSAOTexture());
 
 		// finalize
-		//fbo->SetActiveDraw();
-
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
 		program->Use();
@@ -263,8 +264,6 @@ int main(int argc, char* argv [])
 		program->SetUniform("framebufferSize", vec2(WND_WIDTH, WND_HEIGHT));
 		
 		DRAW_FULLSCREEN_QUAD();
-		//fbo->BlitToDefaultFramebuffer(WND_WIDTH, WND_HEIGHT);
-		//ssao->GetSSAOTarget()->BlitToDefaultFramebuffer(WND_WIDTH, WND_HEIGHT);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

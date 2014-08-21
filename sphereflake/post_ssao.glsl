@@ -19,7 +19,7 @@ float occlude(vec2 uv, vec3 position, vec3 normal)
 	vec3 samplePosition = texture(positions, (gl_FragCoord.xy + uv) / framebufferSize.xy).xyz;
 	vec3 diff = samplePosition - position;
 	float dist = length(diff);
-	return max(0.0, dot(normal, diff / dist) - SSAOBias) * (1.0 / (1.0 + sqrt(dist * SSAOScale))) * SSAOIntensity;
+	return max(0.0, dot(normal, diff / dist) - SSAOBias) * (1.0 / (1.0 + dist * dist * SSAOScale)) * SSAOIntensity;
 }
 
 void main()
