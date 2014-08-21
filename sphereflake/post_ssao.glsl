@@ -7,18 +7,18 @@ layout(binding=2) uniform sampler2D noiseTexture;
 uniform vec3 cameraPosition;
 uniform vec2 framebufferSize;
 
-const float g_sample_rad = 4.0;
-const float g_intensity = 1.0;
-const float g_scale = 3.0;
-const float g_bias = 0.5;
+const float SSAOSampleRadius = 4.0;
+const float SSAOIntensity = 1.0;
+const float SSAOScale = 3.0;
+const float SSAOBias = 0.5;
 
 float doAmbientOcclusion(vec2 uv, vec3 position, vec3 normal)
 {
-	vec3 samplePosition = texelFetch(positions, ivec2(gl_FragCoord.xy + uv), 0).xyz;
+	vec3 samplePosition = texture(positions, (gl_FragCoord.xy + uv) / framebufferSize.xy).xyz;
 	vec3 diff = samplePosition - position;
 	vec3 v = normalize(diff);
-	float d = length(diff) * g_scale;
-	return max(0.0, dot(normal, v) - g_bias) * (1.0 / (1.0 + d)) * g_intensity;
+	float d = length(diff) * SSAOScale;
+	return max(0.0, dot(normal, v) - SSAOBias) * (1.0 / (1.0 + d)) * SSAOIntensity;
 }
 
 void main()
@@ -38,7 +38,7 @@ void main()
 	const vec2 vec[4] = { vec2(1, 0), vec2(-1, 0), vec2(0, 1), vec2(0, -1) };
 
 	float ao = 0.0f;
-	float rad = g_sample_rad / abs(position.z);
+	float rad = SSAOSampleRadius / abs(position.z);
 
 	vec2 rand = normalize(texture(noiseTexture, uv).xy * 2.0f - 1.0f);
 
