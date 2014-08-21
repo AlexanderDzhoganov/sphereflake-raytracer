@@ -118,69 +118,41 @@ int main(int argc, char* argv [])
 		}
 
 		float cameraSpeed = 0.2f * (float)dt * min(rts.closestSphereDistance, 6.0f);
-
-		bool moving = false;
-
 		if (glfwGetKey(window, GLFW_KEY_D))
 		{
 			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() * vec3(1, 0, 0) * cameraSpeed);
-			moving = true;
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_A))
 		{
 			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() *vec3(-1, 0, 0) * cameraSpeed);
-			moving = true;
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_S))
 		{
 			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() *vec3(0, 0, 1) * cameraSpeed);
-			moving = true;
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_W))
 		{
 			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() *vec3(0, 0, -1) * cameraSpeed);
-			moving = true;
 		}
 		
 		if (glfwGetKey(window, GLFW_KEY_Q))
 		{
 			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() *vec3(0, 1, 0) * cameraSpeed);
-			moving = true;
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_E))
 		{
 			camera.SetPosition(camera.GetPosition() + camera.GetOrientation() *vec3(0, -1, 0) * cameraSpeed);
-			moving = true;
-		}
-
-		if (moving)
-		{
-			ssaoFactor -= dt;
-			if (ssaoFactor <= 0.5f)
-			{
-				ssaoFactor = 0.5f;
-			}
-		}
-		else
-		{
-			ssaoFactor += dt;
-			if (ssaoFactor >= 1.0f)
-			{
-				ssaoFactor = 1.0f;
-			}
 		}
 
 		double xpos;
 		double ypos;
 		glfwGetCursorPos(window, &xpos, &ypos);
-
 		double deltax = (xpos - lastXpos);
 		double deltay = (ypos - lastYpos);
-
 		lastXpos = xpos;
 		lastYpos = ypos;
 
