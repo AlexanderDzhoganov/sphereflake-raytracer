@@ -54,7 +54,7 @@ namespace SphereflakeRaytracer
 		SIMD::Vec3Packet m_TopRight;
 		SIMD::Vec3Packet m_BottomLeft;
 
-		__declspec(align(64)) __m256 IntersectSphereflake
+		__declspec(align(64)) SIMD::VecType IntersectSphereflake
 		(
 			const SIMD::Vec3Packet& rayDirection,
 			const SIMD::Matrix4& parentTransform,
@@ -75,7 +75,6 @@ namespace SphereflakeRaytracer
 #ifdef __ARCH_NO_AVX
 
 			__m128 radius = _mm_set1_ps(radiusScalar);
-			__m128 radiusSq = _mm_mul_ps(radius, radius);
 			__m128 doubleRadiusSq = _mm_mul_ps(radius, SIMD::Constants::two);
 			doubleRadiusSq = _mm_mul_ps(doubleRadiusSq, doubleRadiusSq);
 			__m128 t;
@@ -135,10 +134,11 @@ namespace SphereflakeRaytracer
 				maxDepthReached = depth;
 			}
 
+			float scale = (4.0f / 3.0f) * radiusScalar;
+			__m128 translationScale = _mm_set_ps(1.0f, scale, scale, scale);
+
 			for (auto i = 0; i < 9; i++)
 			{
-				float scale = (4.0f / 3.0f) * radiusScalar;
-				__m128 translationScale = _mm_set_ps(1.0f, scale, scale, scale);
 				auto transform = m_ChildTransforms[i];
 				transform.rows[3] = _mm_mul_ps(transform.rows[3], translationScale);
 				auto worldTransform = parentTransform * transform;

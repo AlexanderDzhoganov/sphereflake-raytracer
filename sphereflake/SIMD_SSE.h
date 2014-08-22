@@ -6,7 +6,7 @@ namespace SphereflakeRaytracer
 
 	namespace SIMD
 	{
-		using VecType = __m256;
+		using VecType = __m128;
 
 		namespace Constants
 		{
@@ -249,25 +249,23 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline __m128 RayPlaneIntersection(const Vec3Packet& rayOrigin, const Vec3Packet& rayDirection, const Vec3Packet& planeNormal, __m128& t)
+		__forceinline __m128 RaySphereIntersection
+		(
+			const Vec3Packet& rayDirection,
+			const Vec3Packet& sphereOrigin,
+			const __m128& sphereRadiusSq,
+			__m128& t
+		)
 		{
-			t = _mm_div_ps(_mm_mul_ps(Dot(rayOrigin, planeNormal), Constants::minusOne), Dot(rayDirection, planeNormal));
-			auto result = _mm_cmpge_ps(t, Constants::zero);
-			return result;
-		}
-
-		__forceinline __m128 RaySphereIntersection(const Vec3Packet& rayOrigin, const Vec3Packet& rayDirection, const Vec3Packet& sphereOrigin, __m128 sphereRadiusSq, __m128& t)
-		{
-			Vec3Packet L = sphereOrigin - rayOrigin;
-			__m128 tca = Dot(L, rayDirection);
+			__m128 tca = Dot(sphereOrigin, rayDirection);
+			
 			auto result = _mm_cmpge_ps(tca, Constants::zero);
-
 			if (_mm_movemask_ps(result) == 0)
 			{
 				return result;
 			}
 
-			auto d2 = _mm_sub_ps(Dot(L, L), _mm_mul_ps(tca, tca));
+			auto d2 = _mm_sub_ps(Dot(sphereOrigin, sphereOrigin), _mm_mul_ps(tca, tca));
 
 			result = _mm_cmple_ps(d2, sphereRadiusSq);
 			if (_mm_movemask_ps(result) == 0)
@@ -280,25 +278,10 @@ namespace SphereflakeRaytracer
 			__m128 t0 = _mm_add_ps(tca, thc);
 			__m128 t1 = _mm_sub_ps(tca, thc);
 
-			auto tresult = _mm_cmple_ps(t0, t1);
+			auto tresult = _mm_cmp_ps(t0, t1, _CMP_LE_OQ);
 			t = _mm_or_ps(_mm_and_ps(tresult, t0), _mm_andnot_ps(tresult, t1));
 
 			return result;
-		}
-
-		__forceinline __m128 RayBoundingSphereIntersection(const Vec3Packet& rayOrigin, const Vec3Packet& rayDirection, const Vec3Packet& sphereOrigin, __m128 sphereRadiusSq)
-		{
-			Vec3Packet L = sphereOrigin - rayOrigin;
-			__m128 tca = Dot(L, rayDirection);
-
-			auto result = _mm_cmpge_ps(tca, Constants::zero);
-			if (_mm_movemask_ps(result) == 0)
-			{
-				return result;
-			}
-
-			auto d2 = _mm_sub_ps(Dot(L, L), _mm_mul_ps(tca, tca));
-			return _mm_cmple_ps(d2, sphereRadiusSq);
 		}
 
 	}

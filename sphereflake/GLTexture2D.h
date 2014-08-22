@@ -39,7 +39,7 @@ namespace SphereflakeRaytracer
 
 			void Bind(size_t index)
 			{
-				glActiveTexture(GL_TEXTURE0 + index);
+				glActiveTexture((GLenum)(GL_TEXTURE0 + index));
 				glBindTexture(GL_TEXTURE_2D, m_Handle);
 			}
 

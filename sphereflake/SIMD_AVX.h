@@ -1,7 +1,9 @@
 #ifndef __SIMD_H
 #define __SIMD_H
 
-#define ALIGN64 __declspec(align(64))
+#define ALIGN32 __declspec(align(32))
+
+#pragma warning(disable : 4201) // disable warnings for nameless unions
 
 namespace SphereflakeRaytracer
 {
@@ -14,21 +16,21 @@ namespace SphereflakeRaytracer
 		namespace Constants
 		{
 
-			ALIGN64 const __m256 minusOne = _mm256_set1_ps(-1.0f);
-			ALIGN64 const __m256 zero = _mm256_set1_ps(0.0f);
-			ALIGN64 const __m256 oneThird = _mm256_set1_ps(1.0f / 3.0f);
-			ALIGN64 const __m256 oneHalf = _mm256_set1_ps(1.0f / 2.0f);
-			ALIGN64 const __m256 one = _mm256_set1_ps(1.0f);
-			ALIGN64 const __m256 two = _mm256_set1_ps(2.0f);
-			ALIGN64 const __m256 three = _mm256_set1_ps(3.0f);
-			ALIGN64 const __m256 seventy = _mm256_set1_ps(70.f);
+			ALIGN32 const __m256 minusOne = _mm256_set1_ps(-1.0f);
+			ALIGN32 const __m256 zero = _mm256_set1_ps(0.0f);
+			ALIGN32 const __m256 oneThird = _mm256_set1_ps(1.0f / 3.0f);
+			ALIGN32 const __m256 oneHalf = _mm256_set1_ps(1.0f / 2.0f);
+			ALIGN32 const __m256 one = _mm256_set1_ps(1.0f);
+			ALIGN32 const __m256 two = _mm256_set1_ps(2.0f);
+			ALIGN32 const __m256 three = _mm256_set1_ps(3.0f);
+			ALIGN32 const __m256 seventy = _mm256_set1_ps(70.f);
 
 		}
 
 		struct Matrix4
 		{
 
-			ALIGN64 union
+			ALIGN32 union
 			{
 				float m[4][4];
 				__m128 rows[4];
@@ -81,17 +83,17 @@ namespace SphereflakeRaytracer
 		struct Vec3Packet
 		{
 
-			ALIGN64 union
+			ALIGN32 union
 			{
 				__m256 x; struct { float x0; float x1; float x2; float x3; float x4; float x5; float x6; float x7; };
 			};
 
-			ALIGN64 union
+			ALIGN32 union
 			{
 				__m256 y; struct { float y0; float y1; float y2; float y3; float y4; float y5; float y6; float y7; };
 			};
 
-			ALIGN64 union
+			ALIGN32 union
 			{
 				__m256 z; struct { float z0; float z1; float z2; float z3; float z4; float z5; float z6; float z7; };
 			};
@@ -256,6 +258,7 @@ namespace SphereflakeRaytracer
 			}
 
 			__m256 thc = _mm256_sqrt_ps(_mm256_sub_ps(sphereRadiusSq, d2));
+			t = _mm256_add_ps(tca, thc);
 
 			__m256 t0 = _mm256_add_ps(tca, thc);
 			__m256 t1 = _mm256_sub_ps(tca, thc);

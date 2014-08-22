@@ -224,7 +224,6 @@
     <ClCompile Include="SSAO.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="post_blit.glsl" />
     <None Include="post_final.glsl" />
     <None Include="post_ssao.glsl" />
     <None Include="post_ssao_blur.glsl" />
@@ -233,7 +232,6 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Filesystem.h" />
-    <ClInclude Include="GL.h" />
     <ClInclude Include="GLFramebufferObject.h" />
     <ClInclude Include="GLPixelBufferObject.h" />
     <ClInclude Include="GLProgram.h" />

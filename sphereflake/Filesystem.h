@@ -9,7 +9,8 @@ namespace SphereflakeRaytracer
 
 		inline std::string ReadAllText(const std::string& path)
 		{
-			return std::string(std::istreambuf_iterator<char>(std::ifstream(path)), std::istreambuf_iterator<char>());
+			auto f = std::ifstream(path);
+			return std::string(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
 		}
 
 	}
