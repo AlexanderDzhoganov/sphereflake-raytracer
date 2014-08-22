@@ -169,7 +169,7 @@ namespace SphereflakeRaytracer
 			position.Set(vec3(0.0f));
 			normal.Set(vec3(0.0f));
 
-			IntersectSphereflake(rayDirection, transform, 3.0f, 0, minT, position, normal);
+			IntersectSphereflake(rayDirection, transform, minT, position, normal, 3.0f, 0);
 
 #ifdef __ARCH_NO_AVX
 
