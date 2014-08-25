@@ -8,6 +8,8 @@ namespace SphereflakeRaytracer
 	{
 
 		public:
+		Camera(size_t width, size_t height) : m_Aspect((float)height / (float)width) {}
+
 		mat4 GetViewMatrix() const
 		{
 			mat4 translate = mat4(1.0);

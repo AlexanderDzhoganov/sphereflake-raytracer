@@ -64,6 +64,12 @@
     <ClInclude Include="GLTexture2D.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CommandLine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StringUtil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Sphereflake.cpp">

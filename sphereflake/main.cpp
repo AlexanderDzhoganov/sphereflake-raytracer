@@ -2,6 +2,7 @@
 #pragma warning (disable: 4530) // disable warnings from code not under our control
 
 #include <iostream>
+#include <unordered_map>
 #include <sstream>
 #include <string>
 #include <fstream>
@@ -34,7 +35,10 @@ using namespace glm;
 #define WND_WIDTH 1280
 #define WND_HEIGHT 720
 
+#include "StringUtil.h"
 #include "Filesystem.h"
+#include "CommandLine.h"
+
 #include "GLProgram.h"
 #include "GLPixelBufferObject.h"
 #include "GLTexture2D.h"
@@ -63,7 +67,7 @@ class SphereflakeRaytracerMain
 		InitializeOpenGL(width, height, fullscreen);
 		InitializeGBufferTextures();
 
-		m_Camera = std::make_unique<Camera>();
+		m_Camera = std::make_unique<Camera>(m_Width, m_Height);
 		m_Camera->SetPosition(vec3(-5.4098f, -7.2139f, 1.19006f));
 		m_Camera->SetPitch(-1.371f);
 		m_Camera->SetYaw(0.921999f);
@@ -101,9 +105,9 @@ class SphereflakeRaytracerMain
 			return;
 		}
 
-		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
 
 		m_Window = glfwCreateWindow(width, height, "Sphereflake", fullscreen ? glfwGetPrimaryMonitor() : nullptr, nullptr);
 		if (m_Window == nullptr)
@@ -255,7 +259,7 @@ class SphereflakeRaytracerMain
 
 		m_FinalPassProgram->Use();
 		m_FinalPassProgram->SetUniform("cameraPosition", m_Camera->GetPosition());
-		m_FinalPassProgram->SetUniform("framebufferSize", vec2(WND_WIDTH, WND_HEIGHT));
+		m_FinalPassProgram->SetUniform("framebufferSize", vec2(m_Width, m_Height));
 
 		glViewport(0, 0, m_ViewportWidth, m_ViewportHeight);
 
@@ -291,9 +295,20 @@ class SphereflakeRaytracerMain
 
 };
 
-int main()
+int main(int argc, char* argv[])
 {
-	SphereflakeRaytracerMain rt(WND_WIDTH, WND_HEIGHT, false);
+	CommandLine::Instance().ParseCommandLine(argc, argv);
+
+	auto wndWidth = WND_WIDTH;
+	auto wndHeight = WND_HEIGHT;
+
+	if (COMMANDLINE_HAS_KEY("width") && COMMANDLINE_HAS_KEY("height"))
+	{
+		wndWidth = COMMANDLINE_GET_INT_VALUE("width");
+		wndHeight = COMMANDLINE_GET_INT_VALUE("height");
+	}
+
+	SphereflakeRaytracerMain rt(wndWidth, wndHeight, false);
 	rt.Run();
 	return 0;
 }
