@@ -52,7 +52,7 @@ namespace SphereflakeRaytracer
 		};
 
 		// 4x4 matrix multiplication code adapted from http://fhtr.blogspot.com/2010/02/4x4-float-matrix-multiplication-using.html
-		__forceinline Matrix4 operator*(const Matrix4& a, const Matrix4& b)
+		inline Matrix4 operator*(const Matrix4& a, const Matrix4& b)
 		{
 			Matrix4 result;
 			__m128 a_line, b_line, r_line;
@@ -122,7 +122,7 @@ namespace SphereflakeRaytracer
 
 		};
 
-		__forceinline Vec3Packet operator+(const Vec3Packet& a, const Vec3Packet& b)
+		inline Vec3Packet operator+(const Vec3Packet& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm_add_ps(a.x, b.x);
@@ -131,7 +131,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet operator-(const Vec3Packet& a, const Vec3Packet& b)
+		inline Vec3Packet operator-(const Vec3Packet& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm_sub_ps(a.x, b.x);
@@ -140,7 +140,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet operator*(const Vec3Packet& a, __m128 scalar)
+		inline Vec3Packet operator*(const Vec3Packet& a, __m128 scalar)
 		{
 			Vec3Packet result;
 			result.x = _mm_mul_ps(a.x, scalar);
@@ -149,7 +149,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet operator/(const Vec3Packet& a, __m128 scalar)
+		inline Vec3Packet operator/(const Vec3Packet& a, __m128 scalar)
 		{
 			Vec3Packet result;
 			result.x = _mm_div_ps(a.x, scalar);
@@ -158,7 +158,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline __m128 Dot(const Vec3Packet& a, const Vec3Packet& b)
+		inline __m128 Dot(const Vec3Packet& a, const Vec3Packet& b)
 		{
 			auto x2 = _mm_mul_ps(a.x, b.x);
 			auto y2 = _mm_mul_ps(a.y, b.y);
@@ -166,7 +166,7 @@ namespace SphereflakeRaytracer
 			return _mm_add_ps(_mm_add_ps(x2, y2), z2);
 		}
 
-		__forceinline __m128 Length2(const Vec3Packet& a)
+		inline __m128 Length2(const Vec3Packet& a)
 		{
 			auto temp = _mm_mul_ps(a.x, a.x);
 			auto y2 = _mm_mul_ps(a.y, a.y);
@@ -177,7 +177,7 @@ namespace SphereflakeRaytracer
 			return temp;
 		}
 
-		__forceinline void Normalize(Vec3Packet& a)
+		inline void Normalize(Vec3Packet& a)
 		{
 			auto x2 = _mm_mul_ps(a.x, a.x);
 			auto y2 = _mm_mul_ps(a.y, a.y);
@@ -195,7 +195,7 @@ namespace SphereflakeRaytracer
 			a.z = _mm_mul_ps(a.z, x2);
 		}
 
-		__forceinline Vec3Packet And(const Vec3Packet& a, const Vec3Packet& b)
+		inline Vec3Packet And(const Vec3Packet& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm_and_ps(a.x, b.x);
@@ -204,7 +204,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet And(__m128 a, const Vec3Packet& b)
+		inline Vec3Packet And(__m128 a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm_and_ps(a, b.x);
@@ -213,7 +213,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet AndNot(const Vec3Packet& a, const Vec3Packet& b)
+		inline Vec3Packet AndNot(const Vec3Packet& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm_andnot_ps(a.x, b.x);
@@ -222,7 +222,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet AndNot(__m128 a, const Vec3Packet& b)
+		inline Vec3Packet AndNot(__m128 a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm_andnot_ps(a, b.x);
@@ -231,7 +231,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet Or(const Vec3Packet& a, const Vec3Packet& b)
+		inline Vec3Packet Or(const Vec3Packet& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm_or_ps(a.x, b.x);
@@ -240,7 +240,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet Or(__m128 a, const Vec3Packet& b)
+		inline Vec3Packet Or(__m128 a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm_or_ps(a, b.x);
@@ -249,7 +249,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline __m128 RaySphereIntersection
+		inline __m128 RaySphereIntersection
 		(
 			const Vec3Packet& rayDirection,
 			const Vec3Packet& sphereOrigin,

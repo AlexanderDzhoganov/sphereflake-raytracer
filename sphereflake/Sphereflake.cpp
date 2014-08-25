@@ -75,6 +75,8 @@ namespace SphereflakeRaytracer
 		m_TopRight.Set(topRight);
 		m_BottomLeft.Set(bottomLeft);
 		ComputeChildTransformations();
+
+		m_RootTransform.Set(translate(-m_RayOriginVec3) * CreateRotationMatrix(vec3(90, 0, 0)));
 	}
 
 	void Sphereflake::DoImagePart()
@@ -99,13 +101,9 @@ namespace SphereflakeRaytracer
 
 		SIMD::Vec3Packet position;
 		SIMD::Vec3Packet normal;
-		SIMD::Matrix4 transform;
-		mat4 rot = CreateRotationMatrix(vec3(90, 0, 0));
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-		unsigned long long sobolCounter = 0;
 
 		float floatMax = std::numeric_limits<float>::max();
+		unsigned long long sobolCounter = 0;
 
 		for (;;)
 		{
@@ -164,12 +162,10 @@ namespace SphereflakeRaytracer
 			auto rayDirection = targetDirection - m_RayOrigin;
 			Normalize(rayDirection);
 
-			transform.Set(translate(-m_RayOriginVec3) * rot);
-
 			position.Set(vec3(0.0f));
 			normal.Set(vec3(0.0f));
 
-			IntersectSphereflake(rayDirection, transform, minT, position, normal, 3.0f, 0);
+			IntersectSphereflake(rayDirection, m_RootTransform, minT, position, normal, 3.0f, 0);
 
 #ifdef __ARCH_NO_AVX
 

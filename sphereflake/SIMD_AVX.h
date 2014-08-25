@@ -1,8 +1,6 @@
 #ifndef __SIMD_H
 #define __SIMD_H
 
-#define ALIGN32 __declspec(align(32))
-
 #pragma warning(disable : 4201) // disable warnings for nameless unions
 
 namespace SphereflakeRaytracer
@@ -16,21 +14,21 @@ namespace SphereflakeRaytracer
 		namespace Constants
 		{
 
-			ALIGN32 const __m256 minusOne = _mm256_set1_ps(-1.0f);
-			ALIGN32 const __m256 zero = _mm256_set1_ps(0.0f);
-			ALIGN32 const __m256 oneThird = _mm256_set1_ps(1.0f / 3.0f);
-			ALIGN32 const __m256 oneHalf = _mm256_set1_ps(1.0f / 2.0f);
-			ALIGN32 const __m256 one = _mm256_set1_ps(1.0f);
-			ALIGN32 const __m256 two = _mm256_set1_ps(2.0f);
-			ALIGN32 const __m256 three = _mm256_set1_ps(3.0f);
-			ALIGN32 const __m256 seventy = _mm256_set1_ps(70.f);
+			const __m256 minusOne = _mm256_set1_ps(-1.0f);
+			const __m256 zero = _mm256_set1_ps(0.0f);
+			const __m256 oneThird = _mm256_set1_ps(1.0f / 3.0f);
+			const __m256 oneHalf = _mm256_set1_ps(1.0f / 2.0f);
+			const __m256 one = _mm256_set1_ps(1.0f);
+			const __m256 two = _mm256_set1_ps(2.0f);
+			const __m256 three = _mm256_set1_ps(3.0f);
+			const __m256 seventy = _mm256_set1_ps(70.f);
 
 		}
 
 		struct Matrix4
 		{
 
-			ALIGN32 union
+			union
 			{
 				float m[4][4];
 				__m128 rows[4];
@@ -57,24 +55,43 @@ namespace SphereflakeRaytracer
 		};
 
 		// 4x4 matrix multiplication code adapted from http://fhtr.blogspot.com/2010/02/4x4-float-matrix-multiplication-using.html
-		__forceinline Matrix4 operator*(const Matrix4& a, const Matrix4& b)
+		inline Matrix4 operator*(const Matrix4& a, const Matrix4& b)
 		{
 			Matrix4 result;
 			__m128 a_line, b_line, r_line;
 
-			for (int i = 0; i<16; i += 4)
+			for (int i = 0; i < 16; i += 4)
 			{
 				a_line = _mm_load_ps((float*)&(a.m));
 				b_line = _mm_set1_ps(((float*)&(b.m))[i]);
 				r_line = _mm_mul_ps(a_line, b_line);
 
-				for (int j = 1; j<4; j++)
+				for (int j = 1; j < 4; j++)
 				{
 					a_line = _mm_load_ps(&(((float*)a.m)[j * 4]));
 					b_line = _mm_set1_ps(((float*)&b)[i + j]);
 					r_line = _mm_add_ps(_mm_mul_ps(a_line, b_line), r_line);
 				}
+
 				_mm_store_ps(&(((float*)&result.m)[i]), r_line);
+			}
+
+			return result;
+		}
+
+		inline Matrix4 MultiplyTransposed(const Matrix4&a, const Matrix4& transpB)
+		{
+			Matrix4 result;
+
+			for (int i = 0; i < 4; i++)
+			{
+				for (int j = 0; j < 4; j++)
+				{
+					__m128 c = _mm_mul_ps(a.rows[i], transpB.rows[j]);
+					c = _mm_hadd_ps(c, c);
+					c = _mm_hadd_ps(c, c);
+					_mm_store_ss(&result.m[i][j], c);
+				}
 			}
 
 			return result;
@@ -83,17 +100,17 @@ namespace SphereflakeRaytracer
 		struct Vec3Packet
 		{
 
-			ALIGN32 union
+			union
 			{
 				__m256 x; struct { float x0; float x1; float x2; float x3; float x4; float x5; float x6; float x7; };
 			};
 
-			ALIGN32 union
+			union
 			{
 				__m256 y; struct { float y0; float y1; float y2; float y3; float y4; float y5; float y6; float y7; };
 			};
 
-			ALIGN32 union
+			union
 			{
 				__m256 z; struct { float z0; float z1; float z2; float z3; float z4; float z5; float z6; float z7; };
 			};
@@ -124,7 +141,7 @@ namespace SphereflakeRaytracer
 
 		};
 
-		__forceinline Vec3Packet operator+(const Vec3Packet& a, const Vec3Packet& b)
+		inline Vec3Packet operator+(const Vec3Packet& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm256_add_ps(a.x, b.x);
@@ -133,7 +150,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet operator-(const Vec3Packet& a, const Vec3Packet& b)
+		inline Vec3Packet operator-(const Vec3Packet& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm256_sub_ps(a.x, b.x);
@@ -142,7 +159,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet operator*(const Vec3Packet& a, const __m256& scalar)
+		inline Vec3Packet operator*(const Vec3Packet& a, const __m256& scalar)
 		{
 			Vec3Packet result;
 			result.x = _mm256_mul_ps(a.x, scalar);
@@ -151,7 +168,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet operator/(const Vec3Packet& a, const __m256& scalar)
+		inline Vec3Packet operator/(const Vec3Packet& a, const __m256& scalar)
 		{
 			Vec3Packet result;
 			result.x = _mm256_div_ps(a.x, scalar);
@@ -160,14 +177,14 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline __m256 Dot(const Vec3Packet& a, const Vec3Packet& b)
+		inline __m256 Dot(const Vec3Packet& a, const Vec3Packet& b)
 		{
 			__m256 x2 = _mm256_add_ps(_mm256_mul_ps(a.x, b.x), _mm256_mul_ps(a.y, b.y));
 			x2 = _mm256_add_ps(x2, _mm256_mul_ps(a.z, b.z));
 			return x2;
 		}
 
-		__forceinline void Normalize(Vec3Packet& a)
+		inline void Normalize(Vec3Packet& a)
 		{
 			__m256 length = Dot(a, a);
 			__m256 nr = _mm256_rsqrt_ps(length);
@@ -179,7 +196,7 @@ namespace SphereflakeRaytracer
 			a.z = _mm256_mul_ps(a.z, length);
 		}
 
-		__forceinline Vec3Packet And(const Vec3Packet& a, const Vec3Packet& b)
+		inline Vec3Packet And(const Vec3Packet& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm256_and_ps(a.x, b.x);
@@ -188,7 +205,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet And(const __m256& a, const Vec3Packet& b)
+		inline Vec3Packet And(const __m256& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm256_and_ps(a, b.x);
@@ -197,7 +214,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet AndNot(const Vec3Packet& a, const Vec3Packet& b)
+		inline Vec3Packet AndNot(const Vec3Packet& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm256_andnot_ps(a.x, b.x);
@@ -206,7 +223,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet AndNot(const __m256& a, const Vec3Packet& b)
+		inline Vec3Packet AndNot(const __m256& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm256_andnot_ps(a, b.x);
@@ -215,7 +232,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet Or(const Vec3Packet& a, const Vec3Packet& b)
+		inline Vec3Packet Or(const Vec3Packet& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm256_or_ps(a.x, b.x);
@@ -224,7 +241,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline Vec3Packet Or(const __m256& a, const Vec3Packet& b)
+		inline Vec3Packet Or(const __m256& a, const Vec3Packet& b)
 		{
 			Vec3Packet result;
 			result.x = _mm256_or_ps(a, b.x);
@@ -233,7 +250,7 @@ namespace SphereflakeRaytracer
 			return result;
 		}
 
-		__forceinline __m256 RaySphereIntersection
+		inline __m256 RaySphereIntersection
 		(
 			const Vec3Packet& rayDirection,
 			const Vec3Packet& sphereOrigin,

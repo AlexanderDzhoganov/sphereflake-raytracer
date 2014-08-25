@@ -105,7 +105,7 @@ class SphereflakeRaytracerMain
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
-		m_Window = glfwCreateWindow(width, height, "Sphereflake", fullscreen ? glfwGetPrimaryMonitor() : nullptr, nullptr);
+		m_Window = glfwCreateWindow((int)width, (int)height, "Sphereflake", fullscreen ? glfwGetPrimaryMonitor() : nullptr, nullptr);
 		if (m_Window == nullptr)
 		{
 			std::cout << "failed to create GLFW window" << std::endl;
@@ -176,10 +176,10 @@ class SphereflakeRaytracerMain
 		double xpos;
 		double ypos;
 		glfwGetCursorPos(m_Window, &xpos, &ypos);
-		double deltax = (xpos - m_MouseLastXPos);
-		double deltay = (ypos - m_MouseLastYPos);
-		m_MouseLastXPos = xpos;
-		m_MouseLastYPos = ypos;
+		float deltax = (float)xpos - m_MouseLastXPos;
+		float deltay = (float)ypos - m_MouseLastYPos;
+		m_MouseLastXPos = (float)xpos;
+		m_MouseLastYPos = (float)ypos;
 
 		if (glfwGetMouseButton(m_Window, GLFW_MOUSE_BUTTON_2))
 		{
@@ -293,7 +293,7 @@ class SphereflakeRaytracerMain
 
 int main()
 {
-	SphereflakeRaytracerMain rt(WND_WIDTH, WND_HEIGHT, false);
+	SphereflakeRaytracerMain rt(WND_WIDTH, WND_HEIGHT, true);
 	rt.Run();
 	return 0;
 }

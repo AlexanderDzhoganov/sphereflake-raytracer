@@ -53,8 +53,9 @@ namespace SphereflakeRaytracer
 		SIMD::Vec3Packet m_TopLeft;
 		SIMD::Vec3Packet m_TopRight;
 		SIMD::Vec3Packet m_BottomLeft;
+		SIMD::Matrix4 m_RootTransform;
 
-		__declspec(align(64)) SIMD::VecType IntersectSphereflake
+		SIMD::VecType IntersectSphereflake
 		(
 			const SIMD::Vec3Packet& rayDirection,
 			const SIMD::Matrix4& parentTransform,
