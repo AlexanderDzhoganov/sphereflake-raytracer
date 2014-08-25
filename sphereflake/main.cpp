@@ -105,8 +105,8 @@ class SphereflakeRaytracerMain
 			return;
 		}
 
-		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
 
 		m_Window = glfwCreateWindow((int)width, (int)height, "Sphereflake", fullscreen ? glfwGetPrimaryMonitor() : nullptr, nullptr);
@@ -125,7 +125,17 @@ class SphereflakeRaytracerMain
 		
 		glfwGetFramebufferSize(m_Window, &m_ViewportWidth, &m_ViewportHeight);
 		
+		GLint versionMinor, versionMajor;
+		glGetIntegerv(GL_MINOR_VERSION, &versionMinor);
+		glGetIntegerv(GL_MAJOR_VERSION, &versionMajor);
+
 		std::cout << "OpenGL " << glGetString(GL_VERSION) << std::endl;
+
+		if (versionMajor < 4 && versionMinor < 2)
+		{
+			std::cout << "Version mismatch, required OpenGL version >= 4.2" << std::endl;
+			exit(1);
+		}
 
 		glfwSwapInterval(1); // sync @ 60hz
 	}

@@ -1,4 +1,4 @@
-#version 440 core
+#version 420 core
 
 layout(binding=0) uniform sampler2D positions;
 layout(binding=1) uniform sampler2D normals;
@@ -13,6 +13,8 @@ uniform float normalThreshold;
 uniform float depthThreshold;
 
 uniform vec2 blurDirection;
+
+out vec4 outColor;
 
 void main(void)
 {
@@ -59,6 +61,5 @@ void main(void)
 	}
 
 	color += texture(source, uv) * (weight[0] + leftOverWeight);
-
-	gl_FragColor = color;
+	outColor = color;
 }

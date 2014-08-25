@@ -1,4 +1,4 @@
-#version 440 core
+#version 420 core
 
 layout(binding=0) uniform sampler2D positions;
 layout(binding=1) uniform sampler2D normals;
@@ -13,6 +13,8 @@ uniform float SSAOScale;
 uniform float SSAOBias;
 
 const vec2 kernel[4] = { vec2(1, 0), vec2(-1, 0), vec2(0, 1), vec2(0, -1) };
+
+out vec4 outColor;
 
 float occlude(vec2 uv, vec3 position, vec3 normal)
 {
@@ -30,7 +32,7 @@ void main()
 
 	if(length(position) == 0.0)
 	{
-		gl_FragColor = vec4(0, 0, 0, 1);
+		outColor = vec4(0, 0, 0, 1);
 		return;
 	}
 
@@ -56,5 +58,5 @@ void main()
 	ao /= float(iterations) * 4.0;
 	ao = 1.0 - ao;
 
-	gl_FragColor = vec4(vec3(ao), 1.0);
+	outColor = vec4(vec3(ao), 1.0);
 }

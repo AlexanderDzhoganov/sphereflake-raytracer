@@ -1,4 +1,4 @@
-#version 330 core
+#version 420 core
 
 // attribute-less fullscreen quad vertex shader
 

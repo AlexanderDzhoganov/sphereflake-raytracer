@@ -22,8 +22,6 @@ namespace SphereflakeRaytracer
 		char* ptr = (char*)s.c_str();
 		char* start = ptr;
 
-		size_t newLinesCount = 0;
-
 		for (auto i = 0u; i < s.size(); i++)
 		{
 			if (ptr[i] == '\n')
