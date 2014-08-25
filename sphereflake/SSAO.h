@@ -29,22 +29,22 @@ namespace SphereflakeRaytracer
 
 		void BindNoiseTexture();
 
-		std::unique_ptr<GL::FramebufferObject> m_SSAOTarget = nullptr;
-		std::unique_ptr<GL::FramebufferObject> m_BlurVerticalTarget = nullptr;
-		std::unique_ptr<GL::FramebufferObject> m_BlurHorizontalTarget = nullptr;
+		std::unique_ptr<GL::FramebufferObject> m_SSAOTarget;
+		std::unique_ptr<GL::FramebufferObject> m_BlurVerticalTarget;
+		std::unique_ptr<GL::FramebufferObject> m_BlurHorizontalTarget;
 
-		std::unique_ptr<GL::Program> m_SSAOProgram = nullptr;
-		std::unique_ptr<GL::Program> m_BlurProgram = nullptr;
+		std::unique_ptr<GL::Program> m_SSAOProgram;
+		std::unique_ptr<GL::Program> m_BlurProgram;
 
 		std::vector<vec3> m_Kernel;
 		GLuint m_NoiseTexture;
 
-		float m_SSAOSampleRadius = 30.0f;
-		float m_SSAOIntensity = 0.51f;
-		float m_SSAOScale = 3.28f;
-		float m_SSAOBias = 0.23f;
-		float m_NormalThreshold = 2.47;
-		float m_DepthThreshold = 0.01;
+		float m_SSAOSampleRadius;
+		float m_SSAOIntensity;
+		float m_SSAOScale;
+		float m_SSAOBias;
+		float m_NormalThreshold;
+		float m_DepthThreshold;
 
 	};
 

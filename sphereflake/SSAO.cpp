@@ -26,6 +26,7 @@ using namespace glm;
 
 #pragma warning (pop)
 
+#include "Util.h"
 #include "Filesystem.h"
 #include "GLProgram.h"
 #include "GLPixelBufferObject.h"
@@ -45,7 +46,13 @@ using namespace glm;
 namespace SphereflakeRaytracer
 {
 
-	SSAO::SSAO(size_t width, size_t height, int downScale)
+	SSAO::SSAO(size_t width, size_t height, int downScale) :
+		m_SSAOSampleRadius(30.0f),
+		m_SSAOIntensity(0.51f),
+		m_SSAOScale(3.28f),
+		m_SSAOBias(0.23f),
+		m_NormalThreshold(2.47f),
+		m_DepthThreshold(0.01f)
 	{
 		GenerateNoiseTexture();
 		m_SSAOTarget = std::make_unique<GL::FramebufferObject>(width / downScale, height / downScale);

@@ -40,7 +40,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v110</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Optimized-AVX|Win32'" Label="Configuration">
@@ -60,14 +60,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Optimized-AVX|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v110</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Optimized-SIMD|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v110</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -118,7 +118,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3dll.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\lib\glew-1.11.0\lib\Release\x64\;..\lib\glfw-3.0.4.bin.WIN64\lib-msvc120\</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\lib\glew-1.11.0\lib\Release\x64\;..\lib\glfw-3.0.4.bin.WIN64\lib-msvc110\</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
@@ -178,7 +178,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>..\lib\glew-1.11.0\lib\Release\x64\;..\lib\glfw-3.0.4.bin.WIN64\lib-msvc120\</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\lib\glew-1.11.0\lib\Release\x64\;..\lib\glfw-3.0.4.bin.WIN64\lib-msvc110\</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3dll.lib</AdditionalDependencies>
       <Profile>true</Profile>
     </Link>
@@ -210,7 +210,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>..\lib\glew-1.11.0\lib\Release\x64\;..\lib\glfw-3.0.4.bin.WIN64\lib-msvc120\</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\lib\glew-1.11.0\lib\Release\x64\;..\lib\glfw-3.0.4.bin.WIN64\lib-msvc110\</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3dll.lib</AdditionalDependencies>
       <Profile>true</Profile>
     </Link>

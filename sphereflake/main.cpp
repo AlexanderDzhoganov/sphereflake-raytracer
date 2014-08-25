@@ -35,6 +35,7 @@ using namespace glm;
 #define WND_WIDTH 1280
 #define WND_HEIGHT 720
 
+#include "Util.h"
 #include "StringUtil.h"
 #include "Filesystem.h"
 #include "CommandLine.h"
@@ -62,7 +63,12 @@ class SphereflakeRaytracerMain
 {
 
 	public:
-	SphereflakeRaytracerMain(size_t width, size_t height, bool fullscreen) : m_Width(width), m_Height(height), m_Fullscreen(fullscreen)
+	SphereflakeRaytracerMain(size_t width, size_t height, bool fullscreen) :
+		m_Width(width),
+		m_Height(height),
+		m_Fullscreen(fullscreen),
+		m_MouseLastXPos(0.0f),
+		m_MouseLastYPos(0.0f)
 	{
 		InitializeOpenGL(width, height, fullscreen);
 		InitializeGBufferTextures();
@@ -156,7 +162,7 @@ class SphereflakeRaytracerMain
 			glfwSetWindowShouldClose(m_Window, 1);
 		}
 
-		float cameraSpeed = 0.2f * (float)dt * min(m_Sphereflake->closestSphereDistance, 6.0f);
+		float cameraSpeed = 0.2f * (float)dt * min(m_Sphereflake->GetClosestSphereDistance(), 6.0f);
 		if (glfwGetKey(m_Window, GLFW_KEY_D))
 		{
 			m_Camera->SetPosition(m_Camera->GetPosition() + m_Camera->GetOrientation() * vec3(1, 0, 0) * cameraSpeed);
@@ -222,16 +228,16 @@ class SphereflakeRaytracerMain
 				ss << "sphereflake fps: ";
 				ss << fpsCounter;
 				ss << " depth: ";
-				ss << m_Sphereflake->maxDepthReached;
-				m_Sphereflake->maxDepthReached = 0;
+				ss << m_Sphereflake->GetMaxDepthReached();
+				m_Sphereflake->ResetMaxDepthReached();;
 
 				ss << " rays per second: ";
-				ss << m_Sphereflake->raysPerSecond / 1000;
+				ss << m_Sphereflake->GetRaysPerSecond() / 1000;
 				ss << "k";
 				ss << " closest sphere: ";
-				ss << m_Sphereflake->closestSphereDistance;
-				m_Sphereflake->closestSphereDistance = std::numeric_limits<float>::max();
-				m_Sphereflake->raysPerSecond = 0;
+				ss << m_Sphereflake->GetClosestSphereDistance();
+				m_Sphereflake->ResetClosestSphereDistance();
+				m_Sphereflake->ResetRaysPerSecond();
 
 				glfwSetWindowTitle(m_Window, ss.str().c_str());
 				fpsTimeAccum = 0.0;
@@ -258,7 +264,7 @@ class SphereflakeRaytracerMain
 		m_NormalsTexture->Bind(1);
 
 		// render SSAO
-		m_SSAO->SetSampleRadiusMultiplier(m_Sphereflake->closestSphereDistance);
+		m_SSAO->SetSampleRadiusMultiplier(m_Sphereflake->GetClosestSphereDistance());
 		m_SSAO->Render();
 
 		glActiveTexture(GL_TEXTURE2);
@@ -279,29 +285,29 @@ class SphereflakeRaytracerMain
 		glfwPollEvents();
 	}
 
-	size_t m_Width = 0;
-	size_t m_Height = 0;
-	bool m_Fullscreen = false;
+	size_t m_Width;
+	size_t m_Height;
+	bool m_Fullscreen;
 
-	int m_ViewportWidth = 0;
-	int m_ViewportHeight = 0;
+	int m_ViewportWidth;
+	int m_ViewportHeight;
 
-	float m_MouseLastXPos = 0.0f;
-	float m_MouseLastYPos = 0.0f;
+	float m_MouseLastXPos;
+	float m_MouseLastYPos;
 
-	std::unique_ptr<GL::Program> m_FinalPassProgram = nullptr;
+	std::unique_ptr<GL::Program> m_FinalPassProgram;
 
-	std::unique_ptr<Camera> m_Camera = nullptr;
-	std::unique_ptr<Sphereflake> m_Sphereflake = nullptr;
-	std::unique_ptr<SSAO> m_SSAO = nullptr;
+	std::unique_ptr<Camera> m_Camera;
+	std::unique_ptr<Sphereflake> m_Sphereflake;
+	std::unique_ptr<SSAO> m_SSAO;
 
-	std::unique_ptr<GL::Texture2D> m_PositionsTexture = nullptr;
-	std::unique_ptr<GL::PixelBufferObject> m_PositionsPbo = nullptr;
+	std::unique_ptr<GL::Texture2D> m_PositionsTexture;
+	std::unique_ptr<GL::PixelBufferObject> m_PositionsPbo;
 
-	std::unique_ptr<GL::Texture2D> m_NormalsTexture = nullptr;
-	std::unique_ptr<GL::PixelBufferObject> m_NormalsPbo = nullptr;
+	std::unique_ptr<GL::Texture2D> m_NormalsTexture;
+	std::unique_ptr<GL::PixelBufferObject> m_NormalsPbo;
 
-	GLFWwindow* m_Window = nullptr;
+	GLFWwindow* m_Window;
 
 };
 

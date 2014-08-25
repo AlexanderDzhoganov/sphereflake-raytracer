@@ -8,7 +8,13 @@ namespace SphereflakeRaytracer
 	{
 
 		public:
-		Camera(size_t width, size_t height) : m_Aspect((float)width / (float)height) {}
+		Camera(size_t width, size_t height) :
+			m_Aspect((float)width / (float)height),
+			m_FOV(60.0f),
+			m_Roll(0.0f),
+			m_Pitch(0.0f),
+			m_Yaw(0.0f)
+		{}
 
 		mat4 GetViewMatrix() const
 		{
@@ -108,11 +114,11 @@ namespace SphereflakeRaytracer
 		}
 
 		vec3 m_Position;
-		float m_FOV = 60.0f;
-		float m_Aspect = 16.0f / 9.0f;
-		float m_Roll = 0.0;
-		float m_Pitch = 0.0;
-		float m_Yaw = 0.0;
+		float m_FOV;
+		float m_Aspect;
+		float m_Roll;
+		float m_Pitch;
+		float m_Yaw;
 
 	};
 

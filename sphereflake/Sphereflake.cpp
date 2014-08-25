@@ -40,7 +40,13 @@ extern GLFWwindow* window;
 namespace SphereflakeRaytracer
 {
 
-	Sphereflake::Sphereflake(size_t width, size_t height) : m_Width(width), m_Height(height)
+	Sphereflake::Sphereflake(size_t width, size_t height) :
+		m_Width(width),
+		m_Height(height),
+		m_Deinitialize(false),
+		m_MaxDepthReached(0),
+		m_RaysPerSecond(0),
+		m_ClosestSphereDistance(std::numeric_limits<float>::max())
 	{
 		m_GBuffer.positions.resize(width * height);
 		m_GBuffer.normals.resize(width * height);
@@ -176,7 +182,7 @@ namespace SphereflakeRaytracer
 			size_t loopCount = 8;
 
 #endif
-			raysPerSecond += loopCount;
+			m_RaysPerSecond += loopCount;
 
 			for (auto q = 0u; q < loopCount; q++)
 			{
@@ -189,9 +195,9 @@ namespace SphereflakeRaytracer
 				m_GBuffer.positions[idx] = vec4(position.Extract(q), 1.0f);
 				m_GBuffer.normals[idx] = vec4(normal.Extract(q), 1.0f);
 
-				if (minTArray[q] < closestSphereDistance)
+				if (minTArray[q] < m_ClosestSphereDistance)
 				{
-					closestSphereDistance = minTArray[q];
+					m_ClosestSphereDistance = minTArray[q];
 				}
 			}
 

@@ -71,7 +71,7 @@ namespace SphereflakeRaytracer
 			int GetUniformLocation(const std::string& name);
 
 			GLuint m_Handle;
-			bool m_IsLinked = false;
+			bool m_IsLinked;
 			std::string m_VertexSource;
 			std::string m_FragmentSource;
 

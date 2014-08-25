@@ -32,7 +32,10 @@ namespace SphereflakeRaytracer
 	namespace GL
 	{
 
-		Program::Program(const std::string& vertexSource, const std::string& fragmentSource) : m_VertexSource(vertexSource), m_FragmentSource(fragmentSource)
+		Program::Program(const std::string& vertexSource, const std::string& fragmentSource) :
+			m_VertexSource(vertexSource),
+			m_FragmentSource(fragmentSource),
+			m_IsLinked(false)
 		{
 			Link();
 		}

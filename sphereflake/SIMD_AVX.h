@@ -9,7 +9,9 @@ namespace SphereflakeRaytracer
 	namespace SIMD
 	{
 		
-		using VecType = __m256;
+		//using VecType = __m256;
+
+		typedef __m256 VecType;
 
 		namespace Constants
 		{

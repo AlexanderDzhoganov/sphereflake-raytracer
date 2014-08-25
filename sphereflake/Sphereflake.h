@@ -16,9 +16,7 @@ namespace SphereflakeRaytracer
 	{
 
 		public:
-		int maxDepthReached = 0;
-		long long raysPerSecond = 0;
-		float closestSphereDistance = 0.0f;
+		
 
 		Sphereflake(size_t width, size_t height);
 
@@ -31,6 +29,36 @@ namespace SphereflakeRaytracer
 		const GBuffer& GetGBuffer()
 		{
 			return m_GBuffer;
+		}
+
+		int GetMaxDepthReached()
+		{
+			return m_MaxDepthReached;
+		}
+
+		void ResetMaxDepthReached()
+		{
+			m_MaxDepthReached = 0;
+		}
+
+		long long GetRaysPerSecond()
+		{
+			return m_RaysPerSecond;
+		}
+
+		void ResetRaysPerSecond()
+		{
+			m_RaysPerSecond = 0;
+		}
+
+		float GetClosestSphereDistance()
+		{
+			return m_ClosestSphereDistance;
+		}
+
+		void ResetClosestSphereDistance()
+		{
+			m_ClosestSphereDistance = std::numeric_limits<float>::max();
 		}
 
 		private:
@@ -46,7 +74,11 @@ namespace SphereflakeRaytracer
 
 		std::vector<std::unique_ptr<std::thread>> m_Threads;
 
-		bool m_Deinitialize = false;
+		bool m_Deinitialize;
+
+		int m_MaxDepthReached;
+		long long m_RaysPerSecond;;
+		float m_ClosestSphereDistance;
 
 		SIMD::Vec3Packet m_RayOrigin;
 		vec3 m_RayOriginVec3;
@@ -130,9 +162,9 @@ namespace SphereflakeRaytracer
 
 #endif
 
-			if (depth > maxDepthReached)
+			if (depth > m_MaxDepthReached)
 			{
-				maxDepthReached = depth;
+				m_MaxDepthReached = depth;
 			}
 
 			float scale = (4.0f / 3.0f) * radiusScalar;
