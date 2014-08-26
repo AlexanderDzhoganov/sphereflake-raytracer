@@ -7,7 +7,7 @@ Overview
 --------
 
 This program renders the "Sphereflake" fractal. The rendering is done as a two-step process - a CPU raytracing step and a GPU screen-space post-processing step.
-The first step involves a single ray-per-pixel rendering of the fractal into a G-Buffer containing screen-space position and normal data. 
+The first step involves a single ray-per-pixel sampling of the fractal into a G-Buffer containing screen-space position and normal data. 
 After that a post-processing step on the GPU computes approximate ambient occlusion using a variant of the widespread Screen-space Ambient Occlusion (SSAO) algorithm.
 The raytracing step uses frame-less rendering to allow moving about the scene in real-time.
 
