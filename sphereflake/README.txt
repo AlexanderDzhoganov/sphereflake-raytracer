@@ -27,7 +27,7 @@ Copies of all external dependencies have been provided as part of the software p
 Run-time requirements
 ----------------------
 
-AVX or SSE-capable CPU
+AVX or SSE- capable CPU
 OpenGL 4.2- capable GPU
 
 Please ensure that no other CPU-intensive applications are running and that your CPU is adequately cooled as this software will utilize it at a 100%.
@@ -56,6 +56,7 @@ Performance considerations
 --------------------------
 
 This software has been optimized for Intel's Haswell microarchitecture. All performance measurements were taken on a stock Haswell i7-4970k chip using Intel's VTune Amplifier XE 2013.
+The shader code has been tested on an Nvidia GTX780 Ti and AMD Radeon HD7750.
 For the best experience it is highly recommended to run this software on a 4-core, AVX 256-bit wide capable CPU.
 No Haswell-specific instructions have been used (e.g. fmadd) and an SSE version (albeit much slower) has also been provided in case an AVX-capable chip is not available.
 
@@ -66,4 +67,18 @@ Known issues
 - Clipping the camera through a sphere causes rendering artifacts and should be avoided.
 - Low frames per second - sometimes the OpenGL thread doesn't get enough time to initialize and output starts stuttering. Either restart the application or wait for a few seconds until performance stabilizes.
 The application should vsync at 60hz on a modern GPU.
-- Ambient occlusion is wrong - the used SSAO algorithm is a very crude approximation of ambient occlusion and as such many defects are visible.
+- Ambient occlusion is wrong - the SSAO algorithm is a crude approximation of ambient occlusion and as such many defects are visible.
+
+---------
+Copyright
+---------
+
+Copyright (c) 2014, Alexander Dzhoganov (alexander.dzhoganov@gmail.com)
+Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted,
+provided that the above copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE
+FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
+DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
