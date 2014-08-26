@@ -33,21 +33,6 @@ namespace SphereflakeRaytracer
 
 			for (auto& keyValue : keyValuePairs)
 			{
-				if (keyValue[0] != '-' || keyValue[1] != '-')
-				{
-					if (inputFilenameSet)
-					{
-						std::cout << "Warning: More than one input file in command line arguments, only the first file will be used." << std::endl;
-					}
-					else
-					{
-						m_InputFilename = keyValue;
-						inputFilenameSet = true;
-					}
-
-					continue;
-				}
-
 				if (keyValue.find('=') == -1)
 				{
 					m_CommandLine[keyValue.substr(2, keyValue.size() - 2)] = "true";

@@ -1,3 +1,17 @@
+/*
+ * Sphereflake Raytracer v1.0
+ * 
+ * Copyright (c) 2014, Alexander Dzhoganov (alexander.dzhoganov@gmail.com)
+ * Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted,
+ * provided that the above copyright notice and this permission notice appear in all copies.
+
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE
+ * FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
+ * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
 #pragma warning (push, 0)
 #pragma warning (disable: 4530) // disable warnings from code not under our control
 
@@ -225,16 +239,16 @@ class SphereflakeRaytracerMain
 			if (fpsTimeAccum > 1.0)
 			{
 				std::stringstream ss;
-				ss << "sphereflake fps: ";
+				ss << "Sphereflake FPS: ";
 				ss << fpsCounter;
-				ss << " depth: ";
+				ss << " Depth: ";
 				ss << m_Sphereflake->GetMaxDepthReached();
 				m_Sphereflake->ResetMaxDepthReached();;
 
-				ss << " rays per second: ";
+				ss << " Rays per second: ";
 				ss << m_Sphereflake->GetRaysPerSecond() / 1000;
 				ss << "k";
-				ss << " closest sphere: ";
+				ss << " Closest sphere: ";
 				ss << m_Sphereflake->GetClosestSphereDistance();
 				m_Sphereflake->ResetClosestSphereDistance();
 				m_Sphereflake->ResetRaysPerSecond();
@@ -324,7 +338,13 @@ int main(int argc, char* argv[])
 		wndHeight = COMMANDLINE_GET_INT_VALUE("height");
 	}
 
-	SphereflakeRaytracerMain rt(wndWidth, wndHeight, false);
+	bool fullscreen = false;
+	if (COMMANDLINE_HAS_KEY("fullscreen"))
+	{
+		fullscreen = true;
+	}
+
+	SphereflakeRaytracerMain rt(wndWidth, wndHeight, fullscreen);
 	rt.Run();
 	return 0;
 }
