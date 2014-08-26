@@ -14,20 +14,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="post_final.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="post_ssao.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="post_vertex.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="post_ssao_blur.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="SSAO.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -90,5 +76,22 @@
     <ClCompile Include="SSAO.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\draw_coordinates.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\post_final.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\post_ssao.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\post_ssao_blur.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\post_vertex.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

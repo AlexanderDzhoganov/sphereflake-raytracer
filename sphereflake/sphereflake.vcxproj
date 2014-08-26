@@ -224,12 +224,6 @@
     <ClCompile Include="SSAO.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="post_final.glsl" />
-    <None Include="post_ssao.glsl" />
-    <None Include="post_ssao_blur.glsl" />
-    <None Include="post_vertex.glsl" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CommandLine.h" />
     <ClInclude Include="Filesystem.h" />
@@ -244,6 +238,13 @@
     <ClInclude Include="SSAO.h" />
     <ClInclude Include="StringUtil.h" />
     <ClInclude Include="Util.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\draw_coordinates.glsl" />
+    <None Include="Shaders\post_final.glsl" />
+    <None Include="Shaders\post_ssao.glsl" />
+    <None Include="Shaders\post_ssao_blur.glsl" />
+    <None Include="Shaders\post_vertex.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -61,14 +61,14 @@ namespace SphereflakeRaytracer
 
 		m_SSAOProgram = std::make_unique<GL::Program>
 		(
-			Filesystem::ReadAllText("post_vertex.glsl"),
-			Filesystem::ReadAllText("post_ssao.glsl")
+			Filesystem::ReadAllText("Shaders/post_vertex.glsl"),
+			Filesystem::ReadAllText("Shaders/post_ssao.glsl")
 		);
 
 		m_BlurProgram = std::make_unique<GL::Program>
 		(
-			Filesystem::ReadAllText("post_vertex.glsl"),
-			Filesystem::ReadAllText("post_ssao_blur.glsl")
+			Filesystem::ReadAllText("Shaders/post_vertex.glsl"),
+			Filesystem::ReadAllText("Shaders/post_ssao_blur.glsl")
 		);
 	}
 

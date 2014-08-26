@@ -96,7 +96,12 @@ class SphereflakeRaytracerMain
 		m_Sphereflake = std::make_unique<Sphereflake>(m_Width, m_Height);
 		m_Sphereflake->Initialize();
 
-		m_FinalPassProgram = std::make_unique<GL::Program>(Filesystem::ReadAllText("post_vertex.glsl"), Filesystem::ReadAllText("post_final.glsl"));
+		m_FinalPassProgram = std::make_unique<GL::Program>
+		(
+			Filesystem::ReadAllText("Shaders/post_vertex.glsl"),
+			Filesystem::ReadAllText("Shaders/post_final.glsl")
+		);
+
 		m_SSAO = std::make_unique<SSAO>(width, height, 1);
 	}
 

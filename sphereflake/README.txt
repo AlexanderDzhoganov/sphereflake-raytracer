@@ -22,16 +22,17 @@ GLEW 1.11.0 - cross-platform library for loading OpenGL extensions (http://sourc
 GLM 0.9.5.4 - cross-platform library for linear algebra (http://sourceforge.net/projects/ogl-math/files/glm-0.9.5.4/)
 
 Copies of all external dependencies have been provided as part of the software package in the <PACKAGE_ROOT>/lib/ folder.
+Pre-compiled AVX and SSE versions of the package can be found in the <PACKAGE_ROOT>/bin/ folder.
 
 ----------------------
 Run-time requirements
 ----------------------
 
-AVX or SSE- capable CPU
+64-bit AVX or SSE- capable CPU
 OpenGL 4.2- capable GPU
 
+The dependencies glew32.dll and glfw3.dll, and the Shaders/ folder have to be available in the working directory of the executable.
 Please ensure that no other CPU-intensive applications are running and that your CPU is adequately cooled as this software will utilize it at a 100%.
-The author holds no responsibility for any damage caused to your hardware.
 
 --------
 Controls
