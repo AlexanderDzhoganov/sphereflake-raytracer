@@ -1,8 +1,6 @@
 #ifndef __RAYTRACE_SPHEREFLAKE_H
 #define __RAYTRACE_SPHEREFLAKE_H
 
-#define MAX_DEPTH 30
-
 namespace SphereflakeRaytracer
 {
 
@@ -16,8 +14,6 @@ namespace SphereflakeRaytracer
 	{
 
 		public:
-		
-
 		Sphereflake(size_t width, size_t height);
 
 		~Sphereflake();
@@ -98,11 +94,6 @@ namespace SphereflakeRaytracer
 			int depth
 		)
 		{
-			/*if (depth >= MAX_DEPTH)
-			{
-				return SIMD::Constants::zero;
-			}*/
-
 			float radiusScalar = parentRadius / 3.0f;
 
 #ifdef __ARCH_NO_AVX
@@ -124,6 +115,7 @@ namespace SphereflakeRaytracer
 			SIMD::Vec3Packet sphereOrigin;
 			sphereOrigin.Set(vec3(parentTransform.Extract(3)));
 
+			// intersect with the bounding volume of the current depth
 			auto result = RaySphereIntersection(rayDirection, sphereOrigin, doubleRadiusSq, t);
 
 #ifdef __ARCH_NO_AVX

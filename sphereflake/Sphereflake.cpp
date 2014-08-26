@@ -229,7 +229,7 @@ namespace SphereflakeRaytracer
 
 		for (auto i = 0u; i < 3; i++)
 		{
-			float longitude = radians(60.0f);
+			float longitude = radians(30.0f);
 			float latitude = radians(30.0f + 120.0f * (float) i);
 
 			vec3 displacement = normalize(SphericalToWorldCoodinates(longitude, latitude));
