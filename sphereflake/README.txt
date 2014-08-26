@@ -58,7 +58,7 @@ Performance considerations
 --------------------------
 
 This software has been optimized for Intel's Haswell microarchitecture.
-All performance measurements were taken on a stock Haswell i7-4970k chip using Intel's VTune Amplifier XE 2013.
+All performance measurements were taken on a stock Haswell i7-4790k chip using Intel's VTune Amplifier XE 2013.
 The shader code has been tested on an Nvidia GTX780 Ti and AMD Radeon HD7750.
 For the best experience it is highly recommended to run this software on a 4-core, AVX 256-bit wide capable CPU.
 No Haswell-specific instructions have been used (e.g. fmadd) and an SSE version (albeit much slower) has also been provided in case an AVX-capable chip is not available.
