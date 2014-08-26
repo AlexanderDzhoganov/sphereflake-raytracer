@@ -45,7 +45,8 @@ Right click (hold) + mouse move - camera rotation
 Command-line arguments
 ----------------------
 
-The executable accepts command-line arguments that set the size of the render viewport. The default size is 1280x720, which provides a decent trade-off between quality and performance.
+The executable accepts command-line arguments that set the size of the render viewport.
+The default size is 1280x720, which provides a decent trade-off between quality and performance.
 The upper limit is set by the maximum allowed OpenGL framebuffer size, which must be at least 16384x16384. 
 
 --width=X - sets the width of the output window
@@ -56,7 +57,8 @@ The upper limit is set by the maximum allowed OpenGL framebuffer size, which mus
 Performance considerations
 --------------------------
 
-This software has been optimized for Intel's Haswell microarchitecture. All performance measurements were taken on a stock Haswell i7-4970k chip using Intel's VTune Amplifier XE 2013.
+This software has been optimized for Intel's Haswell microarchitecture.
+All performance measurements were taken on a stock Haswell i7-4970k chip using Intel's VTune Amplifier XE 2013.
 The shader code has been tested on an Nvidia GTX780 Ti and AMD Radeon HD7750.
 For the best experience it is highly recommended to run this software on a 4-core, AVX 256-bit wide capable CPU.
 No Haswell-specific instructions have been used (e.g. fmadd) and an SSE version (albeit much slower) has also been provided in case an AVX-capable chip is not available.
@@ -66,8 +68,8 @@ Known issues
 ------------
 
 - Clipping the camera through a sphere causes rendering artifacts and should be avoided.
-- Low frames per second - sometimes the OpenGL thread doesn't get enough time to initialize and output starts stuttering. Either restart the application or wait for a few seconds until performance stabilizes.
-The application should vsync at 60hz on a modern GPU.
+- Low frames per second - sometimes the OpenGL thread doesn't get enough time to initialize and output starts stuttering.
+Either restart the application or wait for a few seconds until performance stabilizes. The display should vsync at 60hz on a modern GPU.
 - Ambient occlusion is wrong - the SSAO algorithm is a crude approximation of ambient occlusion and as such many defects are visible.
 
 ---------
