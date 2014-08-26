@@ -82,9 +82,11 @@ class SphereflakeRaytracerMain
 		m_Height(height),
 		m_Fullscreen(fullscreen),
 		m_MouseLastXPos(0.0f),
-		m_MouseLastYPos(0.0f)
+		m_MouseLastYPos(0.0f),
+		m_Sphereflake(width, height)
 	{
 		InitializeOpenGL(width, height, fullscreen);
+
 		InitializeGBufferTextures();
 
 		m_Camera = std::make_unique<Camera>(m_Width, m_Height);
@@ -93,10 +95,6 @@ class SphereflakeRaytracerMain
 		m_Camera->SetYaw(0.921999f);
 		m_Camera->SetRoll(0.0f);
 
-		m_Sphereflake = std::make_unique<Sphereflake>(m_Width, m_Height);
-		m_Sphereflake->Initialize();
-		m_Sphereflake->SetView(m_Camera->GetPosition(), m_Camera->GetTopLeft(), m_Camera->GetTopRight(), m_Camera->GetBottomLeft());
-
 		m_FinalPassProgram = std::make_unique<GL::Program>
 		(
 			Filesystem::ReadAllText("Shaders/post_vertex.glsl"),
@@ -104,12 +102,14 @@ class SphereflakeRaytracerMain
 		);
 
 		m_SSAO = std::make_unique<SSAO>(width, height, 1);
+
+	//	m_Sphereflake = std::unique_ptr<Sphereflake>(new Sphereflake(m_Width, m_Height));//std::make_unique<Sphereflake>(m_Width, m_Height);
+		m_Sphereflake.Initialize();
 	}
 
 	~SphereflakeRaytracerMain()
 	{
 		m_Camera = nullptr;
-		m_Sphereflake = nullptr;
 		m_FinalPassProgram = nullptr;
 		m_SSAO = nullptr;
 
@@ -198,7 +198,7 @@ class SphereflakeRaytracerMain
 			glfwSetWindowShouldClose(m_Window, 1);
 		}
 
-		float cameraSpeed = 0.2f * (float)dt * min(m_Sphereflake->GetClosestSphereDistance(), 6.0f);
+		float cameraSpeed = 0.2f * (float)dt * min(m_Sphereflake.GetClosestSphereDistance(), 6.0f);
 		if (glfwGetKey(m_Window, GLFW_KEY_D))
 		{
 			m_Camera->SetPosition(m_Camera->GetPosition() + m_Camera->GetOrientation() * vec3(1, 0, 0) * cameraSpeed);
@@ -267,16 +267,16 @@ class SphereflakeRaytracerMain
 				fpsCounter = 0;
 
 				ss << " Depth: ";
-				ss << m_Sphereflake->GetMaxDepthReached();
-				m_Sphereflake->ResetMaxDepthReached();;
+				ss << m_Sphereflake.GetMaxDepthReached();
+				m_Sphereflake.ResetMaxDepthReached();;
 
 				ss << " Rays per second: ";
-				ss << m_Sphereflake->GetRaysPerSecond() / 1000;
+				ss << m_Sphereflake.GetRaysPerSecond() / 1000;
 				ss << "k";
 				ss << " Closest sphere: ";
-				ss << m_Sphereflake->GetClosestSphereDistance();
-				m_Sphereflake->ResetClosestSphereDistance();
-				m_Sphereflake->ResetRaysPerSecond();
+				ss << m_Sphereflake.GetClosestSphereDistance();
+				m_Sphereflake.ResetClosestSphereDistance();
+				m_Sphereflake.ResetRaysPerSecond();
 
 				glfwSetWindowTitle(m_Window, ss.str().c_str());
 			}
@@ -289,19 +289,19 @@ class SphereflakeRaytracerMain
 	void Render()
 	{
 		// render sphereflake
-		m_Sphereflake->SetView(m_Camera->GetPosition(), m_Camera->GetTopLeft(), m_Camera->GetTopRight(), m_Camera->GetBottomLeft());
+		m_Sphereflake.SetView(m_Camera->GetPosition(), m_Camera->GetTopLeft(), m_Camera->GetTopRight(), m_Camera->GetBottomLeft());
 
-		m_PositionsPbo->BufferData(m_Sphereflake->GetGBuffer().positions);
+		m_PositionsPbo->BufferData(m_Sphereflake.GetGBuffer().positions);
 		m_PositionsTexture->Upload(m_PositionsPbo);
 
-		m_NormalsPbo->BufferData(m_Sphereflake->GetGBuffer().normals);
+		m_NormalsPbo->BufferData(m_Sphereflake.GetGBuffer().normals);
 		m_NormalsTexture->Upload(m_NormalsPbo);
 
 		m_PositionsTexture->Bind(0);
 		m_NormalsTexture->Bind(1);
 
 		// render SSAO
-		m_SSAO->SetSampleRadiusMultiplier(m_Sphereflake->GetClosestSphereDistance());
+		m_SSAO->SetSampleRadiusMultiplier(m_Sphereflake.GetClosestSphereDistance());
 		m_SSAO->Render();
 
 		glActiveTexture(GL_TEXTURE2);
@@ -335,7 +335,7 @@ class SphereflakeRaytracerMain
 	std::unique_ptr<GL::Program> m_FinalPassProgram;
 
 	std::unique_ptr<Camera> m_Camera;
-	std::unique_ptr<Sphereflake> m_Sphereflake;
+	Sphereflake m_Sphereflake;
 	std::unique_ptr<SSAO> m_SSAO;
 
 	std::unique_ptr<GL::Texture2D> m_PositionsTexture;
@@ -366,7 +366,7 @@ int main(int argc, char* argv[])
 	{
 		fullscreen = true;
 	}
-
+	
 	SphereflakeRaytracerMain rt(wndWidth, wndHeight, fullscreen);
 	rt.Run();
 	return 0;

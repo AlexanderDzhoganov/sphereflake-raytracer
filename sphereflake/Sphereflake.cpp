@@ -77,11 +77,9 @@ namespace SphereflakeRaytracer
 	{
 		m_RayOriginVec3 = origin;
 		m_RayOrigin.Set(origin);
-		m_TopLeft.Set(topLeft);
+		m_TopLeft.Set(topLeft); 
 		m_TopRight.Set(topRight);
 		m_BottomLeft.Set(bottomLeft);
-		ComputeChildTransformations();
-
 		m_RootTransform.Set(translate(-m_RayOriginVec3) * CreateRotationMatrix(vec3(90, 0, 0)));
 	}
 
@@ -135,7 +133,7 @@ namespace SphereflakeRaytracer
 				float minTArray[4];
 			};
 
-			minT = _mm_set1_ps(std::numeric_limits<float>::max());
+			minT = _mm_set1_ps(floatMax);
 
 #else
 			auto x0 = 1 + floorf(Sobol::Sample(sobolCounter, 0, rnd(mt)) * (m_Width - 2));
@@ -171,7 +169,8 @@ namespace SphereflakeRaytracer
 			position.Set(vec3(0.0f));
 			normal.Set(vec3(0.0f));
 
-			IntersectSphereflake(rayDirection, m_RootTransform, minT, position, normal, 3.0f, 0);
+			auto transform = m_RootTransform;
+			IntersectSphereflake(rayDirection, transform, minT, position, normal, 3.0f, 0);
 
 #ifdef __ARCH_NO_AVX
 

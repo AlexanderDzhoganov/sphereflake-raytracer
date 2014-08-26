@@ -171,7 +171,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>..\lib\eigen\;..\lib\glm\glm;..\lib\glew-1.11.0\include;..\lib\glfw-3.0.4.bin.WIN64\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\lib\glm\glm;..\lib\glew-1.11.0\include;..\lib\glfw-3.0.4.bin.WIN64\include\</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
@@ -187,7 +187,7 @@
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
     </ClCompile>
     <Link>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>..\lib\glew-1.11.0\lib\Release\x64\;..\lib\glfw-3.0.4.bin.WIN64\lib-msvc110\</AdditionalLibraryDirectories>
@@ -216,7 +216,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <MultiProcessorCompilation>false</MultiProcessorCompilation>
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
-      <PreprocessorDefinitions>_MBCS;_ARCH_NO_AVX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_MBCS;__ARCH_NO_AVX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>false</GenerateDebugInformation>

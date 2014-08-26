@@ -22,12 +22,12 @@ namespace SphereflakeRaytracer
 
 		void SetView(const vec3& origin, const vec3& topLeft, const vec3& topRight, const vec3& bottomLeft);
 
-		const GBuffer& GetGBuffer()
+		const GBuffer& GetGBuffer() const
 		{
 			return m_GBuffer;
 		}
 
-		int GetMaxDepthReached()
+		int GetMaxDepthReached() const
 		{
 			return m_MaxDepthReached;
 		}
@@ -37,7 +37,7 @@ namespace SphereflakeRaytracer
 			m_MaxDepthReached = 0;
 		}
 
-		long long GetRaysPerSecond()
+		long long GetRaysPerSecond() const
 		{
 			return m_RaysPerSecond;
 		}
@@ -47,7 +47,7 @@ namespace SphereflakeRaytracer
 			m_RaysPerSecond = 0;
 		}
 
-		float GetClosestSphereDistance()
+		float GetClosestSphereDistance() const
 		{
 			return m_ClosestSphereDistance;
 		}
@@ -58,6 +58,13 @@ namespace SphereflakeRaytracer
 		}
 
 		private:
+		SIMD::Vec3Packet m_RayOrigin;
+		SIMD::Vec3Packet m_TopLeft;
+		SIMD::Vec3Packet m_TopRight;
+		SIMD::Vec3Packet m_BottomLeft;
+		SIMD::Matrix4 m_RootTransform;
+		SIMD::Matrix4 m_ChildTransforms[9];
+
 		void DoImagePart();
 
 		void ComputeChildTransformations();
@@ -65,8 +72,6 @@ namespace SphereflakeRaytracer
 		size_t m_Width;
 		size_t m_Height;
 		GBuffer m_GBuffer;
-
-		SIMD::Matrix4 m_ChildTransforms[9];
 
 		std::vector<std::unique_ptr<std::thread>> m_Threads;
 
@@ -76,12 +81,7 @@ namespace SphereflakeRaytracer
 		long long m_RaysPerSecond;;
 		float m_ClosestSphereDistance;
 
-		SIMD::Vec3Packet m_RayOrigin;
 		vec3 m_RayOriginVec3;
-		SIMD::Vec3Packet m_TopLeft;
-		SIMD::Vec3Packet m_TopRight;
-		SIMD::Vec3Packet m_BottomLeft;
-		SIMD::Matrix4 m_RootTransform;
 
 		SIMD::VecType IntersectSphereflake
 		(
