@@ -85,8 +85,6 @@ namespace SphereflakeRaytracer
 
 	void Sphereflake::DoImagePart()
 	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-
 		std::mt19937 mt;
 		mt.seed((unsigned long) time(NULL));
 		std::uniform_int_distribution<unsigned int> rnd(0);
@@ -108,6 +106,8 @@ namespace SphereflakeRaytracer
 
 		float floatMax = std::numeric_limits<float>::max();
 		unsigned long long sobolCounter = 0;
+
+		int spinUp = 250;
 
 		for (;;)
 		{
@@ -200,6 +200,12 @@ namespace SphereflakeRaytracer
 				}
 			}
 
+			if(spinUp > 1) // gradually spin-up the threads so we don't upset the UI thread
+			{
+				std::this_thread::sleep_for(std::chrono::milliseconds(max(spinUp, 0)));
+				spinUp -= 10;
+			}
+			
 			if (m_Deinitialize)
 			{
 				return;

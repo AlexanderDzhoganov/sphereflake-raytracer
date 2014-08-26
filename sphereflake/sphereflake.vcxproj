@@ -252,11 +252,10 @@
     <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\draw_coordinates.glsl" />
-    <None Include="Shaders\post_final.glsl" />
-    <None Include="Shaders\post_ssao.glsl" />
-    <None Include="Shaders\post_ssao_blur.glsl" />
-    <None Include="Shaders\post_vertex.glsl" />
+    <None Include="..\bin\Shaders\post_final.glsl" />
+    <None Include="..\bin\Shaders\post_ssao.glsl" />
+    <None Include="..\bin\Shaders\post_ssao_blur.glsl" />
+    <None Include="..\bin\Shaders\post_vertex.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

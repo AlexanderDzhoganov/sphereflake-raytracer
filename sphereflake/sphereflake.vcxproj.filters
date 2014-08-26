@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="GLFramebufferObject.cpp" />
+    <ClCompile Include="GLProgram.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Sobol.cpp" />
+    <ClCompile Include="Sphereflake.cpp" />
+    <ClCompile Include="SSAO.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="CommandLine.h" />
+    <ClInclude Include="Filesystem.h" />
+    <ClInclude Include="GLFramebufferObject.h" />
+    <ClInclude Include="GLPixelBufferObject.h" />
+    <ClInclude Include="GLProgram.h" />
+    <ClInclude Include="GLTexture2D.h" />
+    <ClInclude Include="SIMD_AVX.h" />
+    <ClInclude Include="Sobol.h" />
+    <ClInclude Include="Sphereflake.h" />
+    <ClInclude Include="SIMD_SSE.h" />
+    <ClInclude Include="SSAO.h" />
+    <ClInclude Include="StringUtil.h" />
+    <ClInclude Include="Util.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{0717c099-03dd-4312-bf2b-e1ff447d16a8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\bin\Shaders\post_final.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\bin\Shaders\post_ssao.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\bin\Shaders\post_ssao_blur.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\bin\Shaders\post_vertex.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+  </ItemGroup>
+</Project>

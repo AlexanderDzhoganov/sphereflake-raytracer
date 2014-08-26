@@ -103,7 +103,7 @@ class SphereflakeRaytracerMain
 
 		m_SSAO = std::make_unique<SSAO>(width, height, 1);
 
-	//	m_Sphereflake = std::unique_ptr<Sphereflake>(new Sphereflake(m_Width, m_Height));//std::make_unique<Sphereflake>(m_Width, m_Height);
+		m_Sphereflake.SetView(m_Camera->GetPosition(), m_Camera->GetTopLeft(), m_Camera->GetTopRight(), m_Camera->GetBottomLeft());
 		m_Sphereflake.Initialize();
 	}
 
