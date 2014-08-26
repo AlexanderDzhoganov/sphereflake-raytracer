@@ -45,11 +45,11 @@ Command-line arguments
 ----------------------
 
 The executable accepts command-line arguments that set the size of the render viewport. The default size is 1280x720, which provides a decent trade-off between quality and performance.
-The upper limit is set by the maximum allowed OpenGL framebuffer size, which according to the specification must be at least 16384x16384. 
+The upper limit is set by the maximum allowed OpenGL framebuffer size, which must be at least 16384x16384. 
 
---width=X - sets the width of the window
---height=Y - sets the height of the window
---fullscreen=true - starts as a fullscreen window on the primary monitor
+--width=X - sets the width of the output window
+--height=Y - sets the height of the output window
+--fullscreen=true - initializes a full-screen window on the primary monitor
 
 --------------------------
 Performance considerations
