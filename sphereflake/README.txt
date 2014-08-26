@@ -11,9 +11,9 @@ The first step involves a single ray-per-pixel sampling of the fractal into a G-
 After that a post-processing step on the GPU computes approximate ambient occlusion using a variant of the widespread Screen-space Ambient Occlusion (SSAO) algorithm.
 The raytracing step uses frame-less rendering to allow moving about the scene in real-time.
 
------------------------
+------------------
 Build requirements
------------------------
+------------------
 
 Microsoft's Visual Studio 2012 (or later) or similarly capable versions of GCC and Clang.
 
