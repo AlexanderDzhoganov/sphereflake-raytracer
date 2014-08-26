@@ -23,8 +23,6 @@ namespace SphereflakeRaytracer
 
 		bool ParseCommandLine(int argc, char** argv)
 		{
-			bool inputFilenameSet = false;
-
 			std::vector<std::string> keyValuePairs;
 			for (int i = 1; i < argc; i++)
 			{

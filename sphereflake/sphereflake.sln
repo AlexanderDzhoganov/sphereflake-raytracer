@@ -1,8 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.21005.1
-MinimumVisualStudioVersion = 10.0.40219.1
+# Visual Studio 2012
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sphereflake", "sphereflake.vcxproj", "{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}"
 EndProject
 Global
@@ -16,8 +14,8 @@ Global
 		{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}.Debug|x64.Build.0 = Debug|x64
 		{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}.Optimized-AVX|x64.ActiveCfg = Optimized-AVX|x64
 		{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}.Optimized-AVX|x64.Build.0 = Optimized-AVX|x64
-		{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}.Optimized-SSE|x64.ActiveCfg = Optimized-SIMD|x64
-		{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}.Optimized-SSE|x64.Build.0 = Optimized-SIMD|x64
+		{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}.Optimized-SSE|x64.ActiveCfg = Optimized-SSE|x64
+		{ADE550E9-38D3-4B3E-8CFD-4A48D102D935}.Optimized-SSE|x64.Build.0 = Optimized-SSE|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

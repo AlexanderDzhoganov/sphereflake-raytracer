@@ -1,5 +1,5 @@
-#ifndef __CAMERA_H
-#define __CAMERA_H
+#ifndef __SPHEREFLAKERAYTRACER_CAMERA_H
+#define __SPHEREFLAKERAYTRACER_CAMERA_H
 
 namespace SphereflakeRaytracer
 {

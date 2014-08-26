@@ -95,6 +95,7 @@ class SphereflakeRaytracerMain
 
 		m_Sphereflake = std::make_unique<Sphereflake>(m_Width, m_Height);
 		m_Sphereflake->Initialize();
+		m_Sphereflake->SetView(m_Camera->GetPosition(), m_Camera->GetTopLeft(), m_Camera->GetTopRight(), m_Camera->GetBottomLeft());
 
 		m_FinalPassProgram = std::make_unique<GL::Program>
 		(
@@ -167,10 +168,26 @@ class SphereflakeRaytracerMain
 
 	void InitializeGBufferTextures()
 	{
-		m_PositionsTexture = std::make_unique<GL::Texture2D>(m_Width, m_Height, GL::Texture2DFormat::RGBA_FLOAT, GL::Texture2DFilter::NEAREST, GL::Texture2DWrapMode::CLAMP_TO_EDGE);
+		m_PositionsTexture = std::make_unique<GL::Texture2D>
+		(
+			m_Width,
+			m_Height,
+			GL::Texture2DFormat::RGBA_FLOAT, 
+			GL::Texture2DFilter::NEAREST,
+			GL::Texture2DWrapMode::CLAMP_TO_EDGE
+		);
+
 		m_PositionsPbo = std::make_unique<GL::PixelBufferObject>();
 
-		m_NormalsTexture = std::make_unique<GL::Texture2D>(m_Width, m_Height, GL::Texture2DFormat::RGBA_FLOAT, GL::Texture2DFilter::NEAREST, GL::Texture2DWrapMode::CLAMP_TO_EDGE);
+		m_NormalsTexture = std::make_unique<GL::Texture2D>
+		(
+			m_Width,
+			m_Height,
+			GL::Texture2DFormat::RGBA_FLOAT,
+			GL::Texture2DFilter::NEAREST,
+			GL::Texture2DWrapMode::CLAMP_TO_EDGE
+		);
+
 		m_NormalsPbo = std::make_unique<GL::PixelBufferObject>();
 	}
 
@@ -246,6 +263,9 @@ class SphereflakeRaytracerMain
 				std::stringstream ss;
 				ss << "Sphereflake FPS: ";
 				ss << fpsCounter;
+				fpsTimeAccum = 0.0;
+				fpsCounter = 0;
+
 				ss << " Depth: ";
 				ss << m_Sphereflake->GetMaxDepthReached();
 				m_Sphereflake->ResetMaxDepthReached();;
@@ -259,8 +279,6 @@ class SphereflakeRaytracerMain
 				m_Sphereflake->ResetRaysPerSecond();
 
 				glfwSetWindowTitle(m_Window, ss.str().c_str());
-				fpsTimeAccum = 0.0;
-				fpsCounter = 0;
 			}
 
 			ProcessInput(dt);

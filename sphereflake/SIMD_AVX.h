@@ -10,7 +10,6 @@ namespace SphereflakeRaytracer
 	{
 		
 		//using VecType = __m256;
-
 		typedef __m256 VecType;
 
 		namespace Constants
@@ -76,24 +75,6 @@ namespace SphereflakeRaytracer
 				}
 
 				_mm_store_ps(&(((float*)&result.m)[i]), r_line);
-			}
-
-			return result;
-		}
-
-		inline Matrix4 MultiplyTransposed(const Matrix4&a, const Matrix4& transpB)
-		{
-			Matrix4 result;
-
-			for (int i = 0; i < 4; i++)
-			{
-				for (int j = 0; j < 4; j++)
-				{
-					__m128 c = _mm_mul_ps(a.rows[i], transpB.rows[j]);
-					c = _mm_hadd_ps(c, c);
-					c = _mm_hadd_ps(c, c);
-					_mm_store_ss(&result.m[i][j], c);
-				}
 			}
 
 			return result;
