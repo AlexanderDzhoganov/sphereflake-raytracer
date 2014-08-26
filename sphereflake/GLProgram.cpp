@@ -75,7 +75,10 @@ namespace SphereflakeRaytracer
 				std::cout << log << std::endl;
 
 				glDeleteProgram(m_Handle);
+				return;
 			}
+
+			m_IsLinked = true;
 		}
 
 		GLuint Program::CompileShader(const std::string& source, GLenum type)

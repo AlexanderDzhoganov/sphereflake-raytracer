@@ -7,10 +7,17 @@ namespace SphereflakeRaytracer
 	namespace Filesystem
 	{
 
-		inline std::string ReadAllText(const std::string& path)
+		inline bool ReadAllText(const std::string& path, std::string& result)
 		{
 			auto f = std::ifstream(path);
-			return std::string(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
+			if(!f.is_open())
+			{
+				return false;
+			}
+
+			result = std::string(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
+			
+			return true;
 		}
 
 	}

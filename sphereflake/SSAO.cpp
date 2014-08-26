@@ -59,17 +59,48 @@ namespace SphereflakeRaytracer
 		m_BlurVerticalTarget = std::make_unique<GL::FramebufferObject>(width, height);
 		m_BlurHorizontalTarget = std::make_unique<GL::FramebufferObject>(width, height);
 
+		std::string ssaoVertexSource;
+		if(!Filesystem::ReadAllText("Shaders/post_vertex.glsl", ssaoVertexSource))
+		{
+			std::cout << "Couldn't open shader file: " << "Shaders/post_vertex.glsl" << std::endl;
+			exit(1);
+		}
+
+		std::string ssaoFragmentSource;
+		if(!Filesystem::ReadAllText("Shaders/post_ssao.glsl", ssaoFragmentSource))
+		{
+			std::cout << "Couldn't open shader file: " << "Shaders/post_ssao.glsl" << std::endl;
+			exit(1);
+		}
+
 		m_SSAOProgram = std::make_unique<GL::Program>
 		(
-			Filesystem::ReadAllText("Shaders/post_vertex.glsl"),
-			Filesystem::ReadAllText("Shaders/post_ssao.glsl")
+			ssaoVertexSource,
+			ssaoFragmentSource
 		);
+
+		if(!m_SSAOProgram->IsLinked())
+		{
+			exit(1);
+		}
+
+		std::string blurFragmentSource;
+		if(!Filesystem::ReadAllText("Shaders/post_ssao_blur.glsl", blurFragmentSource))
+		{
+			std::cout << "Couldn't open shader file: " << "Shaders/post_ssao_blur.glsl" << std::endl;
+			exit(1);
+		}
 
 		m_BlurProgram = std::make_unique<GL::Program>
 		(
-			Filesystem::ReadAllText("Shaders/post_vertex.glsl"),
-			Filesystem::ReadAllText("Shaders/post_ssao_blur.glsl")
+			ssaoVertexSource,
+			blurFragmentSource
 		);
+
+		if(!m_BlurProgram->IsLinked())
+		{
+			exit(1);
+		}
 	}
 
 	void SSAO::Render()

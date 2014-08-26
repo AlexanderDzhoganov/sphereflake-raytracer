@@ -13,7 +13,7 @@ The raytracing step uses frame-less rendering to allow moving about the scene in
 Build requirements
 ------------------
 
-Microsoft's Visual Studio 2012 (or later) or similarly capable versions of GCC and Clang.
+Microsoft Visual Studio 2012 (or later) or similarly capable versions of GCC and Clang.
 
 GLFW 3.0.4 - cross-platform library for initializing OpenGL (http://sourceforge.net/projects/glfw/files/glfw/3.0.4/)
 GLEW 1.11.0 - cross-platform library for loading OpenGL extensions (http://sourceforge.net/projects/glew/files/glew/1.11.0/)

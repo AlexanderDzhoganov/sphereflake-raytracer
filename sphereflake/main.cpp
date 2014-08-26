@@ -95,10 +95,24 @@ class SphereflakeRaytracerMain
 		m_Camera->SetYaw(0.921999f);
 		m_Camera->SetRoll(0.0f);
 
+		std::string finalVertexSource;
+		if(!Filesystem::ReadAllText("Shaders/post_vertex.glsl", finalVertexSource))
+		{
+			std::cout << "Couldn't open shader file: " << "Shaders/post_vertex.glsl" << std::endl;
+			exit(1);
+		}
+
+		std::string finalFragmentSource;
+		if(!Filesystem::ReadAllText("Shaders/post_final.glsl", finalFragmentSource))
+		{
+			std::cout << "Couldn't open shader file: " << "Shaders/post_final.glsl" << std::endl;
+			exit(1);
+		}
+
 		m_FinalPassProgram = std::make_unique<GL::Program>
 		(
-			Filesystem::ReadAllText("Shaders/post_vertex.glsl"),
-			Filesystem::ReadAllText("Shaders/post_final.glsl")
+			finalVertexSource,
+			finalFragmentSource
 		);
 
 		m_SSAO = std::make_unique<SSAO>(width, height, 1);
