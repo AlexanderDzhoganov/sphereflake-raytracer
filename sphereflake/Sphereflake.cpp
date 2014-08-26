@@ -107,7 +107,7 @@ namespace SphereflakeRaytracer
 		float floatMax = std::numeric_limits<float>::max();
 		unsigned long long sobolCounter = 0;
 
-		int spinUp = 250;
+		float spinUp = 1.0f;
 
 		for (;;)
 		{
@@ -200,10 +200,10 @@ namespace SphereflakeRaytracer
 				}
 			}
 
-			if(spinUp > 1) // gradually spin-up the threads so we don't upset the UI thread
+			if(spinUp > 0.0f) // gradually spin-up the threads so we don't upset the GL thread
 			{
-				std::this_thread::sleep_for(std::chrono::milliseconds(max(spinUp, 0)));
-				spinUp -= 10;
+				std::this_thread::sleep_for(std::chrono::microseconds((int)spinUp * 1000));
+				spinUp -= spinUp / 1000.0f;
 			}
 			
 			if (m_Deinitialize)

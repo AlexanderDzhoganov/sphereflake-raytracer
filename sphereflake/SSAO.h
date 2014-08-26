@@ -14,7 +14,7 @@ namespace SphereflakeRaytracer
 
 		void SetSampleRadiusMultiplier(float m)
 		{
-			m_SSAOSampleRadius = 30.0f * m;
+			m_SSAOSampleRadius = 8.0f * m;
 		}
 
 		void Render();

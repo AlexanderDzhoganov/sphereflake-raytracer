@@ -47,7 +47,7 @@ namespace SphereflakeRaytracer
 {
 
 	SSAO::SSAO(size_t width, size_t height, int downScale) :
-		m_SSAOSampleRadius(30.0f),
+		m_SSAOSampleRadius(0.0f),
 		m_SSAOIntensity(0.51f),
 		m_SSAOScale(3.28f),
 		m_SSAOBias(0.23f),

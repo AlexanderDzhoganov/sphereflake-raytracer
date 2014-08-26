@@ -40,6 +40,7 @@ W, S - translate camera forward/ backwards
 A, D - translate camera left/ right
 Q, E - translate camera up/ down
 Right click (hold) + mouse move - rotate camera
+ESC - exit
 
 ----------------------
 Command-line arguments
@@ -52,6 +53,9 @@ Resolutions up to 16384x16384 are supported.
 --width=X - width of the output window
 --height=Y - height of the output window
 --fullscreen - initializes a full-screen window on the primary monitor
+
+Example:
+sphereflake.exe --width=1920 --height=1080 --fullscreen
 
 --------------------------
 Performance considerations
@@ -70,8 +74,5 @@ Known issues
 - Moving the camera origin inside a sphere causes artifacts
 	The collision check necessary to fix this is too expensive for such little gain.
 	It requires deliberate effort on the side of the user to achieve this as the camera speed scales with the distance to the closest visible sphere in the fractal.
-- High frametime
-	Sometimes the OpenGL thread doesn't stabilize before the raytracing threads spin up and the output stutters for a while.
-	Either restart the application or wait for a few seconds until performance stabilizes. A modern GPU should easily achieve stable 60 frames per second.
 - Lighting is wrong 
 	SSAO is a crude approximation of ambient occlusion and many defects are easily spotted.
