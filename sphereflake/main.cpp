@@ -26,10 +26,10 @@
 #include <thread>
 #include <random>
 #include <memory>
-
-#include <GL/glew.h>
-
-#define GLFW_DLL
+ 
+#define GL_GLEXT_PROTOTYPES
+#include "glcorearb.h"
+#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
 #define GLM_FORCE_RADIANS
@@ -67,7 +67,7 @@ using namespace glm;
 #include "SIMD_AVX.h"
 #endif
 
-#include "Camera.h"
+#include "camera.h"
 #include "Sphereflake.h"
 #include "SSAO.h"
 
@@ -89,7 +89,7 @@ class SphereflakeRaytracerMain
 
 		InitializeGBufferTextures();
 
-		m_Camera = std::make_unique<Camera>(m_Width, m_Height);
+		m_Camera = std::make_shared<Camera>(m_Width, m_Height);
 		m_Camera->SetPosition(vec3(-5.4098f, -7.2139f, 1.19006f));
 		m_Camera->SetPitch(-1.371f);
 		m_Camera->SetYaw(0.921999f);
@@ -109,13 +109,13 @@ class SphereflakeRaytracerMain
 			exit(1);
 		}
 
-		m_FinalPassProgram = std::make_unique<GL::Program>
+		m_FinalPassProgram = std::make_shared<GL::Program>
 		(
 			finalVertexSource,
 			finalFragmentSource
 		);
 
-		m_SSAO = std::make_unique<SSAO>(width, height, 1);
+		m_SSAO = std::make_shared<SSAO>(width, height, 1);
 
 		m_Sphereflake.SetView(m_Camera->GetPosition(), m_Camera->GetTopLeft(), m_Camera->GetTopRight(), m_Camera->GetBottomLeft());
 		m_Sphereflake.Initialize();
@@ -158,8 +158,6 @@ class SphereflakeRaytracerMain
 		}
 
 		glfwMakeContextCurrent(m_Window);
-		glewExperimental = GL_TRUE;
-		glewInit();
 
 		glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		
@@ -182,7 +180,7 @@ class SphereflakeRaytracerMain
 
 	void InitializeGBufferTextures()
 	{
-		m_PositionsTexture = std::make_unique<GL::Texture2D>
+		m_PositionsTexture = std::make_shared<GL::Texture2D>
 		(
 			m_Width,
 			m_Height,
@@ -191,9 +189,9 @@ class SphereflakeRaytracerMain
 			GL::Texture2DWrapMode::CLAMP_TO_EDGE
 		);
 
-		m_PositionsPbo = std::make_unique<GL::PixelBufferObject>();
+		m_PositionsPbo = std::make_shared<GL::PixelBufferObject>();
 
-		m_NormalsTexture = std::make_unique<GL::Texture2D>
+		m_NormalsTexture = std::make_shared<GL::Texture2D>
 		(
 			m_Width,
 			m_Height,
@@ -202,7 +200,7 @@ class SphereflakeRaytracerMain
 			GL::Texture2DWrapMode::CLAMP_TO_EDGE
 		);
 
-		m_NormalsPbo = std::make_unique<GL::PixelBufferObject>();
+		m_NormalsPbo = std::make_shared<GL::PixelBufferObject>();
 	}
 
 	void ProcessInput(double dt)
@@ -346,17 +344,17 @@ class SphereflakeRaytracerMain
 	float m_MouseLastXPos;
 	float m_MouseLastYPos;
 
-	std::unique_ptr<GL::Program> m_FinalPassProgram;
+	std::shared_ptr<GL::Program> m_FinalPassProgram;
 
-	std::unique_ptr<Camera> m_Camera;
+	std::shared_ptr<Camera> m_Camera;
 	Sphereflake m_Sphereflake;
-	std::unique_ptr<SSAO> m_SSAO;
+	std::shared_ptr<SSAO> m_SSAO;
 
-	std::unique_ptr<GL::Texture2D> m_PositionsTexture;
-	std::unique_ptr<GL::PixelBufferObject> m_PositionsPbo;
+	std::shared_ptr<GL::Texture2D> m_PositionsTexture;
+	std::shared_ptr<GL::PixelBufferObject> m_PositionsPbo;
 
-	std::unique_ptr<GL::Texture2D> m_NormalsTexture;
-	std::unique_ptr<GL::PixelBufferObject> m_NormalsPbo;
+	std::shared_ptr<GL::Texture2D> m_NormalsTexture;
+	std::shared_ptr<GL::PixelBufferObject> m_NormalsPbo;
 
 	GLFWwindow* m_Window;
 

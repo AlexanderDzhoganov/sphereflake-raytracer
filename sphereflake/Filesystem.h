@@ -9,7 +9,7 @@ namespace SphereflakeRaytracer
 
 		inline bool ReadAllText(const std::string& path, std::string& result)
 		{
-			auto f = std::ifstream(path);
+			std::ifstream f(path);
 			if(!f.is_open())
 			{
 				return false;

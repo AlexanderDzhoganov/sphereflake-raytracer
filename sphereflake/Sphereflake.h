@@ -73,7 +73,7 @@ namespace SphereflakeRaytracer
 		size_t m_Height;
 		GBuffer m_GBuffer;
 
-		std::vector<std::unique_ptr<std::thread>> m_Threads;
+		std::vector<std::shared_ptr<std::thread>> m_Threads;
 
 		bool m_Deinitialize;
 

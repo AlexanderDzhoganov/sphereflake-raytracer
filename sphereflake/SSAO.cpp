@@ -7,9 +7,9 @@
 #include <random>
 #include <fstream>
 
-#include <GL/glew.h>
-
-#define GLFW_DLL
+#define GL_GLEXT_PROTOTYPES
+#include "glcorearb.h"
+#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
 #define GLM_FORCE_RADIANS
@@ -55,9 +55,9 @@ namespace SphereflakeRaytracer
 		m_DepthThreshold(0.01f)
 	{
 		GenerateNoiseTexture();
-		m_SSAOTarget = std::make_unique<GL::FramebufferObject>(width / downScale, height / downScale);
-		m_BlurVerticalTarget = std::make_unique<GL::FramebufferObject>(width, height);
-		m_BlurHorizontalTarget = std::make_unique<GL::FramebufferObject>(width, height);
+		m_SSAOTarget = std::make_shared<GL::FramebufferObject>(width / downScale, height / downScale);
+		m_BlurVerticalTarget = std::make_shared<GL::FramebufferObject>(width, height);
+		m_BlurHorizontalTarget = std::make_shared<GL::FramebufferObject>(width, height);
 
 		std::string ssaoVertexSource;
 		if(!Filesystem::ReadAllText("Shaders/post_vertex.glsl", ssaoVertexSource))
@@ -73,7 +73,7 @@ namespace SphereflakeRaytracer
 			exit(1);
 		}
 
-		m_SSAOProgram = std::make_unique<GL::Program>
+		m_SSAOProgram = std::make_shared<GL::Program>
 		(
 			ssaoVertexSource,
 			ssaoFragmentSource
@@ -91,7 +91,7 @@ namespace SphereflakeRaytracer
 			exit(1);
 		}
 
-		m_BlurProgram = std::make_unique<GL::Program>
+		m_BlurProgram = std::make_shared<GL::Program>
 		(
 			ssaoVertexSource,
 			blurFragmentSource

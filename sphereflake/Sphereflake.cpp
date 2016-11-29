@@ -69,7 +69,7 @@ namespace SphereflakeRaytracer
 		auto threadCount = std::thread::hardware_concurrency();
 		for (auto i = 0u; i < threadCount; i++)
 		{
-			m_Threads.push_back(std::make_unique<std::thread>(std::bind(&Sphereflake::DoImagePart, this)));
+			m_Threads.push_back(std::make_shared<std::thread>(std::bind(&Sphereflake::DoImagePart, this)));
 		}
 	}
 

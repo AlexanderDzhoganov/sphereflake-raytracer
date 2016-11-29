@@ -6,9 +6,9 @@
 #include <vector>
 #include <iostream>
 
-#include <GL/glew.h>
-
-#define GLFW_DLL
+#define GL_GLEXT_PROTOTYPES
+#include "glcorearb.h"
+#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
 #define GLM_FORCE_RADIANS

@@ -26,7 +26,7 @@
 // The tabulated direction numbers are available here:
 // http://web.maths.unsw.edu.au/~fkuo/sobol/new-joe-kuo-6.21201
 #include <cassert>
-#include "sobol.h"
+#include "Sobol.h"
 
 namespace Sobol
 {
